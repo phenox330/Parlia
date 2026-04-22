@@ -9,6 +9,8 @@ export default {
         "logo-primary": "var(--color-logo-primary)",
         "logo-stroke": "var(--color-logo-stroke)",
         "text-stroke": "var(--color-text-stroke)",
+        "sidebar-bg": "var(--color-sidebar-bg)",
+        border: "var(--color-border)",
       },
     },
   },

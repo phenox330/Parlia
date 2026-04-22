@@ -11,7 +11,6 @@
     "general": "Obecné",
     "models": "Modely",
     "advanced": "Pokročilé",
-    "postProcessing": "Následné zpracování",
     "history": "Historie",
     "debug": "Ladění",
     "about": "O aplikaci"
@@ -87,7 +86,7 @@
     },
     "permissions": {
       "title": "Vyžadována oprávnění",
-      "description": "Voixy potřebuje několik oprávnění pro správné fungování.",
+      "description": "Parlia potřebuje několik oprávnění pro správné fungování.",
       "microphone": {
         "title": "Přístup k mikrofonu",
         "description": "Potřebný pro zachycení vašeho hlasu k přepisu."
@@ -161,7 +160,7 @@
     "general": {
       "title": "Obecné",
       "shortcut": {
-        "title": "Zkratky Voixy",
+        "title": "Zkratky Parlia",
         "description": "Nastavte klávesové zkratky pro spuštění nahrávání řeči na text",
         "loading": "Načítám zkratky...",
         "none": "Žádné zkratky nejsou nastavené",
@@ -175,10 +174,6 @@
           "cancel": {
             "name": "Zkratka zrušení",
             "description": "Klávesová zkratka pro zrušení aktuálního nahrávání."
-          },
-          "transcribe_with_post_process": {
-            "name": "Klávesa pro následné zpracování",
-            "description": "Volitelné: Vyhrazená klávesová zkratka, která vždy použije AI následné zpracování na váš přepis."
           }
         },
         "errors": {
@@ -242,11 +237,11 @@
       },
       "autostart": {
         "label": "Spouštět při startu",
-        "description": "Automaticky spustit Voixy po přihlášení do počítače."
+        "description": "Automaticky spustit Parlia po přihlášení do počítače."
       },
       "showTrayIcon": {
         "label": "Zobrazit ikonu v systémové liště",
-        "description": "Zobrazit ikonu Voixy v systémové liště."
+        "description": "Zobrazit ikonu Parlia v systémové liště."
       },
       "overlay": {
         "title": "Pozice překryvu",
@@ -324,66 +319,6 @@
         "duplicate": "\"{{word}}\" již existuje"
       }
     },
-    "postProcessing": {
-      "title": "Následné zpracování",
-      "hotkey": {
-        "title": "Klávesová zkratka"
-      },
-      "api": {
-        "title": "API (kompatibilní s OpenAI)",
-        "provider": {
-          "title": "Poskytovatel",
-          "description": "Vyberte poskytovatele kompatibilního s OpenAI."
-        },
-        "appleIntelligence": {
-          "title": "Apple Intelligence",
-          "description": "Běží plně na zařízení. Není potřeba API klíč ani síťové připojení.",
-          "requirements": "Vyžaduje Mac s Apple Silicon a macOS Tahoe (26.0) nebo novější. Apple Intelligence musí být povoleno v Nastavení systému.",
-          "unavailable": "Apple Intelligence není na tomto zařízení k dispozici. Vyžaduje Mac s Apple Silicon a macOS Tahoe (26.0) nebo novější a povolené Apple Intelligence v Nastavení systému."
-        },
-        "baseUrl": {
-          "title": "Základní URL",
-          "description": "Základní URL API pro vybraného poskytovatele. Upravitelné je pouze u vlastního poskytovatele.",
-          "placeholder": "https://api.openai.com/v1"
-        },
-        "apiKey": {
-          "title": "API klíč",
-          "description": "API klíč pro vybraného poskytovatele.",
-          "placeholder": "sk-..."
-        },
-        "model": {
-          "title": "Model",
-          "descriptionApple": "Zadejte volitelný číselný limit tokenů nebo ponechte výchozí předvolbu na zařízení.",
-          "descriptionCustom": "Zadejte identifikátor modelu očekávaný vaším vlastním endpointem.",
-          "descriptionDefault": "Vyberte model dostupný u vybraného poskytovatele.",
-          "placeholderApple": "Apple Intelligence",
-          "placeholderWithOptions": "Vyhledejte nebo vyberte model",
-          "placeholderNoOptions": "Zadejte název modelu",
-          "refreshModels": "Obnovit modely"
-        }
-      },
-      "prompts": {
-        "title": "Prompt",
-        "selectedPrompt": {
-          "title": "Vybraný prompt",
-          "description": "Vyberte šablonu pro zpřesnění přepisu nebo vytvořte novou. V textu promptu použijte ${output} pro vložení zachyceného přepisu."
-        },
-        "noPrompts": "Nejsou k dispozici žádné prompty",
-        "selectPrompt": "Vyberte prompt",
-        "createNew": "Vytvořit nový prompt",
-        "promptLabel": "Název promptu",
-        "promptLabelPlaceholder": "Zadejte název promptu",
-        "promptInstructions": "Instrukce promptu",
-        "promptInstructionsPlaceholder": "Napište instrukce, které se mají spustit po přepisu. Příklad: Zlepšete gramatiku a srozumitelnost následujícího textu: ${output}",
-        "promptTip": "Tip: Použijte <code>${output}</code> pro vložení přepsaného textu do promptu.",
-        "updatePrompt": "Aktualizovat prompt",
-        "deletePrompt": "Smazat prompt",
-        "createPrompt": "Vytvořit prompt",
-        "cancel": "Zrušit",
-        "selectToEdit": "Vyberte výše prompt, abyste zobrazili a upravili jeho podrobnosti.",
-        "createFirst": "Klikněte nahoře na 'Vytvořit nový prompt' a vytvořte svůj první prompt pro následné zpracování."
-      }
-    },
     "history": {
       "title": "Historie",
       "openFolder": "Otevřít složku nahrávek",
@@ -407,7 +342,7 @@
       },
       "updateChecks": {
         "label": "Kontrolovat aktualizace",
-        "description": "Automaticky kontrolovat nové verze Voixy"
+        "description": "Automaticky kontrolovat nové verze Parlia"
       },
       "soundTheme": {
         "label": "Zvukový motiv",
@@ -440,10 +375,6 @@
         "title": "Mikrofon při zavřeném víku",
         "description": "Mikrofon, který se použije při zavřeném víku notebooku"
       },
-      "postProcessingToggle": {
-        "label": "Následné zpracování",
-        "description": "Povolit AI vylepšení textu po přepisu"
-      },
       "muteWhileRecording": {
         "label": "Ztlumit při nahrávání",
         "description": "Ztlumit systémový zvuk během nahrávání"
@@ -471,11 +402,11 @@
       "title": "O aplikaci",
       "version": {
         "title": "Verze",
-        "description": "Aktuální verze Voixy"
+        "description": "Aktuální verze Parlia"
       },
       "appDataDirectory": {
         "title": "Adresář dat aplikace",
-        "description": "Umístění, kde Voixy ukládá data"
+        "description": "Umístění, kde Parlia ukládá data"
       },
       "sourceCode": {
         "title": "Zdrojový kód",
@@ -484,7 +415,7 @@
       },
       "supportDevelopment": {
         "title": "Podpořte vývoj",
-        "description": "Pomozte nám pokračovat ve vývoji Voixy",
+        "description": "Pomozte nám pokračovat ve vývoji Parlia",
         "button": "Přispět"
       },
       "acknowledgments": {
@@ -492,7 +423,7 @@
         "whisper": {
           "title": "Whisper.cpp",
           "description": "Vysoce výkonné inferenční zpracování modelu automatického rozpoznávání řeči Whisper od OpenAI",
-          "details": "Voixy používá Whisper.cpp pro rychlé lokální zpracování řeči na text. Díky skvělé práci Georgiho Gerganova a přispěvatelů."
+          "details": "Parlia používá Whisper.cpp pro rychlé lokální zpracování řeči na text. Díky skvělé práci Georgiho Gerganova a přispěvatelů."
         }
       }
     }
@@ -535,7 +466,7 @@
   },
   "accessibility": {
     "permissionsRequired": "Vyžadována oprávnění usnadnění přístupu",
-    "permissionsDescription": "Voixy potřebuje oprávnění usnadnění přístupu, aby mohlo psát přepsaný text.",
+    "permissionsDescription": "Parlia potřebuje oprávnění usnadnění přístupu, aby mohlo psát přepsaný text.",
     "openSettings": "Otevřít Nastavení systému",
     "dismiss": "Zavřít"
   },
@@ -544,7 +475,7 @@
   },
   "appLanguage": {
     "title": "Jazyk aplikace",
-    "description": "Změňte jazyk rozhraní Voixy"
+    "description": "Změňte jazyk rozhraní Parlia"
   },
   "overlay": {
     "transcribing": "Přepisuji...",

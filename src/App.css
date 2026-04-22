@@ -3,11 +3,13 @@
 @theme {
   --color-text: #0f0f0f;
   --color-background: #fbfbfb;
-  --color-background-ui: #7c3aed;
-  --color-logo-primary: #a855f7;
-  --color-logo-stroke: #3b0764;
+  --color-background-ui: #116cf5;
+  --color-logo-primary: #116cf5;
+  --color-logo-stroke: #0a4ab0;
   --color-text-stroke: #f6f6f6;
-  --color-mid-gray: #808080;
+  --color-mid-gray: #363636;
+  --color-sidebar-bg: #080808;
+  --color-border: #363636;
 }
 
 :root {
@@ -48,9 +50,11 @@
   :root {
     /* Colors - Dark Theme */
     --color-text: #fbfbfb;
-    --color-background: #2c2b29;
-    --color-logo-primary: #c084fc;
-    --color-logo-stroke: #e9d5ff;
+    --color-background: #080808;
+    --color-logo-primary: #116cf5;
+    --color-logo-stroke: #87b8fc;
+    --color-sidebar-bg: #080808;
+    --color-border: #363636;
   }
 }
 

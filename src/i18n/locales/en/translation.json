@@ -11,7 +11,7 @@
     "general": "General",
     "models": "Models",
     "advanced": "Advanced",
-    "postProcessing": "Post Process",
+    "commands": "Commands",
     "history": "History",
     "debug": "Debug",
     "about": "About"
@@ -87,7 +87,7 @@
     },
     "permissions": {
       "title": "Permissions Required",
-      "description": "Voixy needs a couple of permissions to work properly.",
+      "description": "Parlia needs a couple of permissions to work properly.",
       "microphone": {
         "title": "Microphone Access",
         "description": "Required to hear your voice for transcription."
@@ -100,6 +100,7 @@
       "granted": "Granted",
       "waiting": "Waiting...",
       "allGranted": "All set!",
+      "skip": "Skip",
       "errors": {
         "checkFailed": "Failed to check permissions. Please try again.",
         "requestFailed": "Failed to request permission. Please try again."
@@ -143,7 +144,7 @@
     "general": {
       "title": "General",
       "shortcut": {
-        "title": "Voixy Shortcuts",
+        "title": "Parlia Shortcuts",
         "description": "Configure keyboard shortcuts to trigger speech-to-text recording",
         "loading": "Loading shortcuts...",
         "none": "No shortcuts configured",
@@ -157,10 +158,6 @@
           "cancel": {
             "name": "Cancel Shortcut",
             "description": "The keyboard shortcut to cancel the current recording."
-          },
-          "transcribe_with_post_process": {
-            "name": "Post-Processing Hotkey",
-            "description": "Optional: A dedicated hotkey that always applies AI post-processing to your transcription."
           }
         },
         "errors": {
@@ -242,11 +239,11 @@
       },
       "autostart": {
         "label": "Launch on Startup",
-        "description": "Automatically start Voixy when you log in to your computer."
+        "description": "Automatically start Parlia when you log in to your computer."
       },
       "showTrayIcon": {
         "label": "Show Tray Icon",
-        "description": "Display the Voixy icon in the system tray."
+        "description": "Display the Parlia icon in the system tray."
       },
       "overlay": {
         "title": "Overlay Position",
@@ -324,66 +321,6 @@
         "duplicate": "\"{{word}}\" already exists"
       }
     },
-    "postProcessing": {
-      "title": "Post Process",
-      "hotkey": {
-        "title": "Hotkey"
-      },
-      "api": {
-        "title": "API (OpenAI Compatible)",
-        "provider": {
-          "title": "Provider",
-          "description": "Select an OpenAI-compatible provider."
-        },
-        "appleIntelligence": {
-          "title": "Apple Intelligence",
-          "description": "Runs fully on-device. No API key or network access is required.",
-          "requirements": "Requires an Apple Silicon Mac running macOS Tahoe (26.0) or later. Apple Intelligence must be enabled in System Settings.",
-          "unavailable": "Apple Intelligence is not available on this device. Requires an Apple Silicon Mac running macOS Tahoe (26.0) or later with Apple Intelligence enabled in System Settings."
-        },
-        "baseUrl": {
-          "title": "Base URL",
-          "description": "API base URL for the selected provider. Only the custom provider can be edited.",
-          "placeholder": "https://api.openai.com/v1"
-        },
-        "apiKey": {
-          "title": "API Key",
-          "description": "API key for the selected provider.",
-          "placeholder": "sk-..."
-        },
-        "model": {
-          "title": "Model",
-          "descriptionApple": "Provide an optional numeric token limit or keep the default on-device preset.",
-          "descriptionCustom": "Provide the model identifier expected by your custom endpoint.",
-          "descriptionDefault": "Choose a model exposed by the selected provider.",
-          "placeholderApple": "Apple Intelligence",
-          "placeholderWithOptions": "Search or select a model",
-          "placeholderNoOptions": "Type a model name",
-          "refreshModels": "Refresh models"
-        }
-      },
-      "prompts": {
-        "title": "Prompt",
-        "selectedPrompt": {
-          "title": "Selected Prompt",
-          "description": "Select a template for refining transcriptions or create a new one. Use ${output} inside the prompt text to reference the captured transcript."
-        },
-        "noPrompts": "No prompts available",
-        "selectPrompt": "Select a prompt",
-        "createNew": "Create New Prompt",
-        "promptLabel": "Prompt Label",
-        "promptLabelPlaceholder": "Enter prompt name",
-        "promptInstructions": "Prompt Instructions",
-        "promptInstructionsPlaceholder": "Write the instructions to run after transcription. Example: Improve grammar and clarity for the following text: ${output}",
-        "promptTip": "Tip: Use <code>${output}</code> to insert the transcribed text in your prompt.",
-        "updatePrompt": "Update Prompt",
-        "deletePrompt": "Delete Prompt",
-        "createPrompt": "Create Prompt",
-        "cancel": "Cancel",
-        "selectToEdit": "Select a prompt above to view and edit its details.",
-        "createFirst": "Click 'Create New Prompt' above to create your first post-processing prompt."
-      }
-    },
     "history": {
       "title": "History",
       "openFolder": "Open Recordings Folder",
@@ -394,6 +331,26 @@
       "unsave": "Remove from saved",
       "delete": "Delete entry",
       "deleteError": "Failed to delete entry. Please try again."
+    },
+    "commands": {
+      "title": "Voice Commands",
+      "description": "Say a keyword to automatically transform your transcription.",
+      "enable": "Voice Commands",
+      "enableDescription": "Enable voice commands to transform your transcriptions with a keyword.",
+      "addCommand": "Add command",
+      "keyword": "Keyword",
+      "prompt": "Instructions",
+      "keywordPlaceholder": "e.g. email",
+      "promptPlaceholder": "e.g. Transform this transcription into a formal email...",
+      "delete": "Delete",
+      "llmModel": {
+        "title": "Local AI Model",
+        "download": "Download",
+        "ready": "Ready",
+        "activate": "Activate",
+        "notDownloaded": "Not downloaded",
+        "partial": "Partial download detected"
+      }
     },
     "debug": {
       "title": "Debug",
@@ -407,7 +364,7 @@
       },
       "updateChecks": {
         "label": "Check for Updates",
-        "description": "Automatically check for new versions of Voixy"
+        "description": "Automatically check for new versions of Parlia"
       },
       "soundTheme": {
         "label": "Sound Theme",
@@ -440,10 +397,6 @@
         "title": "Clamshell Microphone",
         "description": "Microphone to use when laptop lid is closed"
       },
-      "postProcessingToggle": {
-        "label": "Post Processing",
-        "description": "Enable AI-powered text refinement after transcription"
-      },
       "muteWhileRecording": {
         "label": "Mute While Recording",
         "description": "Mute system audio during recording"
@@ -471,11 +424,11 @@
       "title": "About",
       "version": {
         "title": "Version",
-        "description": "Current version of Voixy"
+        "description": "Current version of Parlia"
       },
       "appDataDirectory": {
         "title": "App Data Directory",
-        "description": "Location where Voixy stores its data"
+        "description": "Location where Parlia stores its data"
       },
       "sourceCode": {
         "title": "Source Code",
@@ -484,7 +437,7 @@
       },
       "supportDevelopment": {
         "title": "Support Development",
-        "description": "Help us continue building Voixy",
+        "description": "Help us continue building Parlia",
         "button": "Donate"
       },
       "acknowledgments": {
@@ -492,7 +445,7 @@
         "whisper": {
           "title": "Whisper.cpp",
           "description": "High-performance inference of OpenAI's Whisper automatic speech recognition model",
-          "details": "Voixy uses Whisper.cpp for fast, local speech-to-text processing. Thanks to the amazing work by Georgi Gerganov and contributors."
+          "details": "Parlia uses Whisper.cpp for fast, local speech-to-text processing. Thanks to the amazing work by Georgi Gerganov and contributors."
         }
       }
     }
@@ -535,7 +488,7 @@
   },
   "accessibility": {
     "permissionsRequired": "Accessibility Permissions Required",
-    "permissionsDescription": "Voixy needs accessibility permissions to type transcribed text.",
+    "permissionsDescription": "Parlia needs accessibility permissions to type transcribed text.",
     "openSettings": "Open System Settings",
     "dismiss": "Dismiss"
   },
@@ -544,7 +497,7 @@
   },
   "appLanguage": {
     "title": "Application Language",
-    "description": "Change the language of the Voixy interface"
+    "description": "Change the language of the Parlia interface"
   },
   "overlay": {
     "transcribing": "Transcribing...",

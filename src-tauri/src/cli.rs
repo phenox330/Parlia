@@ -1,7 +1,7 @@
 use clap::Parser;
 
 #[derive(Parser, Debug, Clone, Default)]
-#[command(name = "voixy", about = "Voixy - Speech to Text")]
+#[command(name = "parlia", about = "Parlia - Speech to Text")]
 pub struct CliArgs {
     /// Start with the main window hidden
     #[arg(long)]
@@ -14,10 +14,6 @@ pub struct CliArgs {
     /// Toggle transcription on/off (sent to running instance)
     #[arg(long)]
     pub toggle_transcription: bool,
-
-    /// Toggle transcription with post-processing on/off (sent to running instance)
-    #[arg(long)]
-    pub toggle_post_process: bool,
 
     /// Cancel the current operation (sent to running instance)
     #[arg(long)]

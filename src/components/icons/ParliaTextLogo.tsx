@@ -1,6 +1,6 @@
 import React from "react";
 
-const VoixyTextLogo = ({
+const ParliaTextLogo = ({
   width,
   height,
   className,
@@ -16,7 +16,7 @@ const VoixyTextLogo = ({
     <svg
       width={w}
       height={h}
-      viewBox="0 0 200 56"
+      viewBox="-15 0 250 56"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
@@ -31,10 +31,10 @@ const VoixyTextLogo = ({
         letterSpacing="6"
         className="logo-primary"
       >
-        VOIXY
+        PARLIA
       </text>
     </svg>
   );
 };
 
-export default VoixyTextLogo;
+export default ParliaTextLogo;

@@ -1,11 +1,11 @@
 [package]
-name = "voixy"
+name = "parlia"
 version = "0.7.9"
-description = "Voixy"
-authors = ["Voixy"]
+description = "Parlia"
+authors = ["Parlia"]
 edition = "2021"
 license = "MIT"
-default-run = "voixy"
+default-run = "parlia"
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.
@@ -16,7 +16,7 @@ incremental = true # Compile your binary in smaller steps.
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "voixy_app_lib"
+name = "parlia_app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 # [[bin]]
@@ -76,6 +76,7 @@ specta = "=2.0.0-rc.22"
 specta-typescript = "0.0.9"
 tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
 tauri-plugin-dialog = "2.6"
+llama-cpp-2 = "0.1"
 
 [target.'cfg(unix)'.dependencies]
 signal-hook = "0.3"

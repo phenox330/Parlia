@@ -6,6 +6,7 @@
 bun install                    # Install dependencies
 mkdir -p src-tauri/resources/models
 curl -o src-tauri/resources/models/silero_vad_v4.onnx https://blob.handy.computer/silero_vad_v4.onnx
+# Note: silero_vad_v4.onnx is hosted at blob.handy.computer (upstream CDN) — kept as-is since no Parlia replacement exists yet.
 ```
 
 **Development:**

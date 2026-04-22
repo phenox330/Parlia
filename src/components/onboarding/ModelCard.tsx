@@ -88,7 +88,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
     if (isFeatured) {
       return "border-2 border-logo-primary/25 bg-logo-primary/5";
     }
-    return "border-2 border-mid-gray/20";
+    return "border-2 border-border";
   };
 
   const getInteractiveClasses = () => {
@@ -190,7 +190,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
         )}
       </div>
 
-      <hr className="w-full border-mid-gray/20" />
+      <hr className="w-full border-border" />
 
       {/* Bottom row: tags + action buttons (full width) */}
       <div className="flex items-center gap-3 w-full -mb-0.5 mt-0.5 h-5">

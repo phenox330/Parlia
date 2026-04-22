@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Voixy",
+  "productName": "Parlia",
   "version": "0.7.9",
-  "identifier": "com.voixy.app",
+  "identifier": "com.parlia.app",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
@@ -14,14 +14,17 @@
     "windows": [
       {
         "label": "main",
-        "title": "Voixy",
+        "title": "Parlia",
         "width": 680,
         "height": 570,
         "minWidth": 680,
         "minHeight": 570,
         "resizable": true,
         "maximizable": false,
-        "visible": false
+        "visible": false,
+        "backgroundColor": "#080808",
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
       }
     ],
     "security": {
@@ -51,7 +54,7 @@
     "macOS": {
       "files": {},
       "hardenedRuntime": true,
-      "minimumSystemVersion": "10.13",
+      "minimumSystemVersion": "11.0",
       "signingIdentity": "-",
       "entitlements": "Entitlements.plist"
     },

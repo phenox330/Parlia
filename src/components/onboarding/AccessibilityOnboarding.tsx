@@ -10,7 +10,7 @@ import {
 import { toast } from "sonner";
 import { commands } from "@/bindings";
 import { useSettingsStore } from "@/stores/settingsStore";
-import VoixyTextLogo from "../icons/VoixyTextLogo";
+import ParliaTextLogo from "../icons/ParliaTextLogo";
 import { Keyboard, Mic, Check, Loader2 } from "lucide-react";
 
 interface AccessibilityOnboardingProps {
@@ -231,7 +231,7 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
   return (
     <div className="h-screen w-screen flex flex-col p-6 gap-6 items-center justify-center">
       <div className="flex flex-col items-center gap-2">
-        <VoixyTextLogo width={200} />
+        <ParliaTextLogo width={200} />
       </div>
 
       <div className="max-w-md w-full flex flex-col items-center gap-4">
@@ -245,7 +245,7 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
         </div>
 
         {/* Microphone Permission Card */}
-        <div className="w-full p-4 rounded-lg bg-white/5 border border-mid-gray/20">
+        <div className="w-full p-4 rounded-lg bg-white/5 border border-border">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-full bg-logo-primary/20 shrink-0">
               <Mic className="w-6 h-6 text-logo-primary" />
@@ -280,7 +280,7 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
         </div>
 
         {/* Accessibility Permission Card */}
-        <div className="w-full p-4 rounded-lg bg-white/5 border border-mid-gray/20">
+        <div className="w-full p-4 rounded-lg bg-white/5 border border-border">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-full bg-logo-primary/20 shrink-0">
               <Keyboard className="w-6 h-6 text-logo-primary" />
@@ -313,6 +313,13 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
             </div>
           </div>
         </div>
+
+        <button
+          onClick={onComplete}
+          className="mt-2 text-sm text-text/40 hover:text-text/70 transition-colors"
+        >
+          {t("onboarding.permissions.skip", "Passer")}
+        </button>
       </div>
     </div>
   );

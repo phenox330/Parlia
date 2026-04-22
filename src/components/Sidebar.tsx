@@ -1,8 +1,15 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Cog, FlaskConical, History, Info, Sparkles, Cpu } from "lucide-react";
-import VoixyTextLogo from "./icons/VoixyTextLogo";
-import HandyHand from "./icons/HandyHand";
+import {
+  Cog,
+  FlaskConical,
+  History,
+  Info,
+  Cpu,
+  MessageSquareCode,
+} from "lucide-react";
+import ParliaTextLogo from "./icons/ParliaTextLogo";
+import ParliaHand from "./icons/ParliaHand";
 import { useSettings } from "../hooks/useSettings";
 import {
   GeneralSettings,
@@ -10,8 +17,8 @@ import {
   HistorySettings,
   DebugSettings,
   AboutSettings,
-  PostProcessingSettings,
   ModelsSettings,
+  CommandsSettings,
 } from "./settings";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
@@ -34,7 +41,7 @@ interface SectionConfig {
 export const SECTIONS_CONFIG = {
   general: {
     labelKey: "sidebar.general",
-    icon: HandyHand,
+    icon: ParliaHand,
     component: GeneralSettings,
     enabled: () => true,
   },
@@ -50,11 +57,11 @@ export const SECTIONS_CONFIG = {
     component: AdvancedSettings,
     enabled: () => true,
   },
-  postprocessing: {
-    labelKey: "sidebar.postProcessing",
-    icon: Sparkles,
-    component: PostProcessingSettings,
-    enabled: (settings) => settings?.post_process_enabled ?? false,
+  commands: {
+    labelKey: "sidebar.commands",
+    icon: MessageSquareCode,
+    component: CommandsSettings,
+    enabled: () => true,
   },
   history: {
     labelKey: "sidebar.history",
@@ -93,9 +100,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     .map(([id, config]) => ({ id: id as SidebarSection, ...config }));
 
   return (
-    <div className="flex flex-col w-40 h-full border-e border-mid-gray/20 items-center px-2">
-      <VoixyTextLogo width={120} className="m-4" />
-      <div className="flex flex-col w-full items-center gap-1 pt-2 border-t border-mid-gray/20">
+    <div className="flex flex-col w-40 h-full border-e border-border bg-sidebar-bg items-center px-2 pt-8">
+      <ParliaTextLogo width={120} className="m-4" />
+      <div className="flex flex-col w-full items-center gap-1 pt-2 border-t border-border">
         {availableSections.map((section) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;

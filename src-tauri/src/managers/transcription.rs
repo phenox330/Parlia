@@ -499,8 +499,13 @@ impl TranscriptionManager {
                             };
 
                             let params = WhisperInferenceParams {
-                                language: whisper_language,
+                                language: whisper_language.clone(),
                                 translate: settings.translate_to_english,
+                                initial_prompt: if whisper_language.as_deref() == Some("fr") {
+                                    Some("Transcription en français. Les mots anglais doivent être conservés tels quels en anglais.".to_string())
+                                } else {
+                                    None
+                                },
                                 ..Default::default()
                             };
 

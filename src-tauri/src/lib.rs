@@ -8,7 +8,6 @@ mod clipboard;
 mod commands;
 mod helpers;
 mod input;
-mod llm_client;
 mod managers;
 mod overlay;
 mod settings;
@@ -26,6 +25,7 @@ use tauri_specta::{collect_commands, Builder};
 use env_filter::Builder as EnvFilterBuilder;
 use managers::audio::AudioRecordingManager;
 use managers::history::HistoryManager;
+use managers::llm::LlmModelManager;
 use managers::model::ModelManager;
 use managers::transcription::TranscriptionManager;
 #[cfg(unix)]
@@ -122,12 +122,16 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     );
     let history_manager =
         Arc::new(HistoryManager::new(app_handle).expect("Failed to initialize history manager"));
+    let llm_model_manager = Arc::new(
+        LlmModelManager::new(app_handle).expect("Failed to initialize LLM model manager"),
+    );
 
     // Add managers to Tauri's managed state
     app_handle.manage(recording_manager.clone());
     app_handle.manage(model_manager.clone());
     app_handle.manage(transcription_manager.clone());
     app_handle.manage(history_manager.clone());
+    app_handle.manage(llm_model_manager.clone());
 
     // Note: Shortcuts are NOT initialized here.
     // The frontend is responsible for calling the `initialize_shortcuts` command
@@ -277,17 +281,7 @@ pub fn run(cli_args: CliArgs) {
         shortcut::change_clipboard_handling_setting,
         shortcut::change_auto_submit_setting,
         shortcut::change_auto_submit_key_setting,
-        shortcut::change_post_process_enabled_setting,
         shortcut::change_experimental_enabled_setting,
-        shortcut::change_post_process_base_url_setting,
-        shortcut::change_post_process_api_key_setting,
-        shortcut::change_post_process_model_setting,
-        shortcut::set_post_process_provider,
-        shortcut::fetch_post_process_models,
-        shortcut::add_post_process_prompt,
-        shortcut::update_post_process_prompt,
-        shortcut::delete_post_process_prompt,
-        shortcut::set_post_process_selected_prompt,
         shortcut::update_custom_words,
         shortcut::suspend_binding,
         shortcut::resume_binding,
@@ -310,7 +304,6 @@ pub fn run(cli_args: CliArgs) {
         commands::open_recordings_folder,
         commands::open_log_dir,
         commands::open_app_data_dir,
-        commands::check_apple_intelligence_available,
         commands::initialize_enigo,
         commands::initialize_shortcuts,
         commands::models::get_available_models,
@@ -346,6 +339,16 @@ pub fn run(cli_args: CliArgs) {
         commands::history::delete_history_entry,
         commands::history::update_history_limit,
         commands::history::update_recording_retention_period,
+        commands::llm::get_available_llm_models,
+        commands::llm::download_llm_model,
+        commands::llm::cancel_llm_download,
+        commands::llm::delete_llm_model,
+        commands::llm::set_active_llm_model,
+        commands::llm::get_llm_model_status,
+        commands::llm::get_voice_commands,
+        commands::llm::add_voice_command,
+        commands::llm::update_voice_command,
+        commands::llm::delete_voice_command,
         helpers::clamshell::is_laptop,
     ]);
 
@@ -374,7 +377,7 @@ pub fn run(cli_args: CliArgs) {
                     }),
                     // File logs respect the user's settings (stored in FILE_LOG_LEVEL atomic)
                     Target::new(TargetKind::LogDir {
-                        file_name: Some("handy".into()),
+                        file_name: Some("parlia".into()),
                     })
                     .filter(|metadata| {
                         let file_level = FILE_LOG_LEVEL.load(Ordering::Relaxed);
@@ -393,8 +396,6 @@ pub fn run(cli_args: CliArgs) {
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             if args.iter().any(|a| a == "--toggle-transcription") {
                 signal_handle::send_transcription_input(app, "transcribe", "CLI");
-            } else if args.iter().any(|a| a == "--toggle-post-process") {
-                signal_handle::send_transcription_input(app, "transcribe_with_post_process", "CLI");
             } else if args.iter().any(|a| a == "--cancel") {
                 crate::utils::cancel_current_operation(app);
             } else {

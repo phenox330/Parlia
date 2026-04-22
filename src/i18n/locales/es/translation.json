@@ -11,7 +11,6 @@
     "general": "General",
     "models": "Modelos",
     "advanced": "Avanzado",
-    "postProcessing": "Post Proceso",
     "history": "Historial",
     "debug": "Depuración",
     "about": "Acerca de"
@@ -87,7 +86,7 @@
     },
     "permissions": {
       "title": "Permisos Requeridos",
-      "description": "Voixy necesita algunos permisos para funcionar correctamente.",
+      "description": "Parlia necesita algunos permisos para funcionar correctamente.",
       "microphone": {
         "title": "Acceso al Micrófono",
         "description": "Necesario para escuchar tu voz para la transcripción."
@@ -161,7 +160,7 @@
     "general": {
       "title": "General",
       "shortcut": {
-        "title": "Atajos de Voixy",
+        "title": "Atajos de Parlia",
         "description": "Configura atajos de teclado para activar la grabación de voz a texto",
         "loading": "Cargando atajos...",
         "none": "No hay atajos configurados",
@@ -175,10 +174,6 @@
           "cancel": {
             "name": "Atajo de Cancelar",
             "description": "El atajo de teclado para cancelar la grabación actual."
-          },
-          "transcribe_with_post_process": {
-            "name": "Tecla de Post Procesamiento",
-            "description": "Opcional: Una tecla de acceso rápido dedicada que siempre aplica post procesamiento con IA a tu transcripción."
           }
         },
         "errors": {
@@ -242,11 +237,11 @@
       },
       "autostart": {
         "label": "Iniciar al Arranque",
-        "description": "Iniciar Voixy automáticamente cuando inicies sesión en tu computadora."
+        "description": "Iniciar Parlia automáticamente cuando inicies sesión en tu computadora."
       },
       "showTrayIcon": {
         "label": "Mostrar Icono de Bandeja",
-        "description": "Mostrar el icono de Voixy en la bandeja del sistema."
+        "description": "Mostrar el icono de Parlia en la bandeja del sistema."
       },
       "overlay": {
         "title": "Posición de Superposición",
@@ -324,66 +319,6 @@
         "duplicate": "\"{{word}}\" ya existe"
       }
     },
-    "postProcessing": {
-      "title": "Post Proceso",
-      "hotkey": {
-        "title": "Tecla de acceso rápido"
-      },
-      "api": {
-        "title": "API (Compatible con OpenAI)",
-        "provider": {
-          "title": "Proveedor",
-          "description": "Selecciona un proveedor compatible con OpenAI."
-        },
-        "appleIntelligence": {
-          "title": "Apple Intelligence",
-          "description": "Se ejecuta completamente en el dispositivo. No se requiere clave API ni acceso a la red.",
-          "requirements": "Requiere un Mac con Apple Silicon ejecutando macOS Tahoe (26.0) o posterior. Apple Intelligence debe estar habilitado en Ajustes del Sistema.",
-          "unavailable": "Apple Intelligence no está disponible en este dispositivo. Requiere un Mac con Apple Silicon ejecutando macOS Tahoe (26.0) o posterior con Apple Intelligence habilitado en Ajustes del Sistema."
-        },
-        "baseUrl": {
-          "title": "URL Base",
-          "description": "URL base de la API para el proveedor seleccionado. Solo se puede editar el proveedor personalizado.",
-          "placeholder": "https://api.openai.com/v1"
-        },
-        "apiKey": {
-          "title": "Clave API",
-          "description": "Clave API para el proveedor seleccionado.",
-          "placeholder": "sk-..."
-        },
-        "model": {
-          "title": "Modelo",
-          "descriptionApple": "Proporciona un límite de tokens numérico opcional o mantén el preajuste predeterminado en el dispositivo.",
-          "descriptionCustom": "Proporciona el identificador del modelo esperado por tu endpoint personalizado.",
-          "descriptionDefault": "Elige un modelo expuesto por el proveedor seleccionado.",
-          "placeholderApple": "Apple Intelligence",
-          "placeholderWithOptions": "Buscar o seleccionar un modelo",
-          "placeholderNoOptions": "Escribe un nombre de modelo",
-          "refreshModels": "Actualizar modelos"
-        }
-      },
-      "prompts": {
-        "title": "Prompt",
-        "selectedPrompt": {
-          "title": "Prompt Seleccionado",
-          "description": "Selecciona una plantilla para refinar las transcripciones o crea una nueva. Usa ${output} dentro del texto del prompt para hacer referencia a la transcripción capturada."
-        },
-        "noPrompts": "No hay prompts disponibles",
-        "selectPrompt": "Seleccionar un prompt",
-        "createNew": "Crear Nuevo Prompt",
-        "promptLabel": "Etiqueta del Prompt",
-        "promptLabelPlaceholder": "Ingresa el nombre del prompt",
-        "promptInstructions": "Instrucciones del Prompt",
-        "promptInstructionsPlaceholder": "Escribe las instrucciones para ejecutar después de la transcripción. Ejemplo: Mejora la gramática y claridad del siguiente texto: ${output}",
-        "promptTip": "Consejo: Usa <code>${output}</code> para insertar el texto transcrito en tu prompt.",
-        "updatePrompt": "Actualizar Prompt",
-        "deletePrompt": "Eliminar Prompt",
-        "createPrompt": "Crear Prompt",
-        "cancel": "Cancelar",
-        "selectToEdit": "Selecciona un prompt arriba para ver y editar sus detalles.",
-        "createFirst": "Haz clic en 'Crear Nuevo Prompt' arriba para crear tu primer prompt de post procesamiento."
-      }
-    },
     "history": {
       "title": "Historial",
       "openFolder": "Abrir Carpeta de Grabaciones",
@@ -407,7 +342,7 @@
       },
       "updateChecks": {
         "label": "Buscar Actualizaciones",
-        "description": "Buscar automáticamente nuevas versiones de Voixy"
+        "description": "Buscar automáticamente nuevas versiones de Parlia"
       },
       "soundTheme": {
         "label": "Tema de Sonido",
@@ -440,10 +375,6 @@
         "title": "Micrófono en Modo Clamshell",
         "description": "Micrófono a usar cuando la tapa del portátil está cerrada"
       },
-      "postProcessingToggle": {
-        "label": "Post Procesamiento",
-        "description": "Habilitar refinamiento de texto impulsado por IA después de la transcripción"
-      },
       "muteWhileRecording": {
         "label": "Silenciar Durante la Grabación",
         "description": "Silenciar el audio del sistema durante la grabación"
@@ -471,11 +402,11 @@
       "title": "Acerca de",
       "version": {
         "title": "Versión",
-        "description": "Versión actual de Voixy"
+        "description": "Versión actual de Parlia"
       },
       "appDataDirectory": {
         "title": "Directorio de Datos de la Aplicación",
-        "description": "Ubicación donde Voixy almacena sus datos"
+        "description": "Ubicación donde Parlia almacena sus datos"
       },
       "sourceCode": {
         "title": "Código Fuente",
@@ -484,7 +415,7 @@
       },
       "supportDevelopment": {
         "title": "Apoyar el Desarrollo",
-        "description": "Ayúdanos a continuar construyendo Voixy",
+        "description": "Ayúdanos a continuar construyendo Parlia",
         "button": "Donar"
       },
       "acknowledgments": {
@@ -492,7 +423,7 @@
         "whisper": {
           "title": "Whisper.cpp",
           "description": "Inferencia de alto rendimiento del modelo de reconocimiento automático de voz Whisper de OpenAI",
-          "details": "Voixy usa Whisper.cpp para procesamiento de voz a texto rápido y local. Gracias al increíble trabajo de Georgi Gerganov y colaboradores."
+          "details": "Parlia usa Whisper.cpp para procesamiento de voz a texto rápido y local. Gracias al increíble trabajo de Georgi Gerganov y colaboradores."
         }
       }
     }
@@ -535,7 +466,7 @@
   },
   "accessibility": {
     "permissionsRequired": "Se Requieren Permisos de Accesibilidad",
-    "permissionsDescription": "Voixy necesita permisos de accesibilidad para escribir texto transcrito.",
+    "permissionsDescription": "Parlia necesita permisos de accesibilidad para escribir texto transcrito.",
     "openSettings": "Abrir Ajustes del Sistema",
     "dismiss": "Descartar"
   },
@@ -544,7 +475,7 @@
   },
   "appLanguage": {
     "title": "Idioma de la aplicación",
-    "description": "Cambia el idioma de la interfaz de Voixy"
+    "description": "Cambia el idioma de la interfaz de Parlia"
   },
   "overlay": {
     "transcribing": "Transcribiendo...",

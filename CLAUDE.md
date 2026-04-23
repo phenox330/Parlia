@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Current status & roadmap
+
+See [`ROADMAP.md`](./ROADMAP.md) for the live status snapshot (what
+shipped recently, what's blocked, what's next). Update it as work
+progresses so future sessions pick up the latest context.
+
 ## Development Commands
 
 **Prerequisites:** [Rust](https://rustup.rs/) (latest stable), [Bun](https://bun.sh/)

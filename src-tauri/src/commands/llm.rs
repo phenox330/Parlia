@@ -247,3 +247,54 @@ pub fn change_anthropic_model_setting(app: AppHandle, model: String) -> Result<(
     write_settings(&app, settings);
     Ok(())
 }
+
+fn normalize_opt(value: Option<String>) -> Option<String> {
+    value.and_then(|v| {
+        let trimmed = v.trim().to_string();
+        if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed)
+        }
+    })
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn change_openai_compat_base_url_setting(
+    app: AppHandle,
+    base_url: Option<String>,
+) -> Result<(), String> {
+    let _guard = lock_commands();
+    let mut settings = get_settings(&app);
+    settings.openai_compat_base_url =
+        normalize_opt(base_url).map(|s| s.trim_end_matches('/').to_string());
+    write_settings(&app, settings);
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn change_openai_compat_api_key_setting(
+    app: AppHandle,
+    key: Option<String>,
+) -> Result<(), String> {
+    let _guard = lock_commands();
+    let mut settings = get_settings(&app);
+    settings.openai_compat_api_key = normalize_opt(key);
+    write_settings(&app, settings);
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn change_openai_compat_model_setting(
+    app: AppHandle,
+    model: Option<String>,
+) -> Result<(), String> {
+    let _guard = lock_commands();
+    let mut settings = get_settings(&app);
+    settings.openai_compat_model = normalize_opt(model);
+    write_settings(&app, settings);
+    Ok(())
+}

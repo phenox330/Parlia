@@ -737,6 +737,30 @@ async changeAnthropicModelSetting(model: string) : Promise<Result<null, string>>
     else return { status: "error", error: e  as any };
 }
 },
+async changeOpenaiCompatBaseUrlSetting(baseUrl: string | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_openai_compat_base_url_setting", { baseUrl }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async changeOpenaiCompatApiKeySetting(key: string | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_openai_compat_api_key_setting", { key }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async changeOpenaiCompatModelSetting(model: string | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_openai_compat_model_setting", { model }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 /**
  * Checks if the Mac is a laptop by detecting battery presence
  * 
@@ -768,7 +792,23 @@ export type AppSettings = { bindings: Partial<{ [key in string]: ShortcutBinding
  * Anthropic API key — stored plaintext in the settings store.
  * Ship a keychain-backed secret store before distributing widely.
  */
-anthropic_api_key?: string | null; anthropic_model?: string }
+anthropic_api_key?: string | null; anthropic_model?: string; 
+/**
+ * Base URL for the OpenAI-compatible provider, without trailing slash.
+ * Examples: `http://localhost:11434/v1` (Ollama),
+ * `https://api.groq.com/openai/v1`, `https://openrouter.ai/api/v1`.
+ */
+openai_compat_base_url?: string | null; 
+/**
+ * Optional bearer token sent as `Authorization: Bearer <key>`. Blank is
+ * valid — Ollama and LM Studio don't require auth by default.
+ */
+openai_compat_api_key?: string | null; 
+/**
+ * Model id as understood by the provider (e.g. `qwen2.5:1.5b`,
+ * `llama-3.1-8b-instant`, `openai/gpt-4o-mini`).
+ */
+openai_compat_model?: string | null }
 export type AudioDevice = { index: string; name: string; is_default: boolean }
 export type AutoSubmitKey = "enter" | "ctrl_enter" | "cmd_enter"
 export type BindingResponse = { success: boolean; binding: ShortcutBinding | null; error: string | null }
@@ -782,7 +822,13 @@ export type CommandsLlmProvider =
 /**
  * Cloud inference via Anthropic's Messages API. Requires an API key.
  */
-"anthropic"
+"anthropic" | 
+/**
+ * Any OpenAI-compatible chat/completions endpoint — covers Ollama,
+ * LM Studio, Groq, OpenRouter, DeepSeek, vLLM, etc. Needs base URL +
+ * model name; the API key is optional (blank for local Ollama).
+ */
+"custom"
 export type CustomSounds = { start: boolean; stop: boolean }
 /**
  * Outcome of a download request, distinguishing user cancellation from a

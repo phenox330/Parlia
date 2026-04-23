@@ -121,6 +121,12 @@ const settingUpdaters: {
     commands.changeAnthropicApiKeySetting(value as string | null),
   anthropic_model: (value) =>
     commands.changeAnthropicModelSetting(value as string),
+  openai_compat_base_url: (value) =>
+    commands.changeOpenaiCompatBaseUrlSetting(value as string | null),
+  openai_compat_api_key: (value) =>
+    commands.changeOpenaiCompatApiKeySetting(value as string | null),
+  openai_compat_model: (value) =>
+    commands.changeOpenaiCompatModelSetting(value as string | null),
 };
 
 export const useSettingsStore = create<SettingsStore>()(

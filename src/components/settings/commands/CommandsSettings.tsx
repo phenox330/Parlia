@@ -19,8 +19,15 @@ export const CommandsSettings: React.FC = () => {
     (getSetting("commands_llm_provider") as CommandsLlmProvider | undefined) ??
     "anthropic";
   const anthropicKey = getSetting("anthropic_api_key") ?? "";
+  const customBaseUrl = getSetting("openai_compat_base_url") ?? "";
+  const customApiKey = getSetting("openai_compat_api_key") ?? "";
+  const customModel = getSetting("openai_compat_model") ?? "";
   const [keyDraft, setKeyDraft] = useState<string>(anthropicKey);
   const [showKey, setShowKey] = useState(false);
+  const [baseUrlDraft, setBaseUrlDraft] = useState<string>(customBaseUrl);
+  const [customKeyDraft, setCustomKeyDraft] = useState<string>(customApiKey);
+  const [showCustomKey, setShowCustomKey] = useState(false);
+  const [modelDraft, setModelDraft] = useState<string>(customModel);
   const [voiceCommands, setVoiceCommands] = useState<VoiceCommand[]>([]);
   const addButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -28,6 +35,18 @@ export const CommandsSettings: React.FC = () => {
   useEffect(() => {
     setKeyDraft(anthropicKey);
   }, [anthropicKey]);
+
+  useEffect(() => {
+    setBaseUrlDraft(customBaseUrl);
+  }, [customBaseUrl]);
+
+  useEffect(() => {
+    setCustomKeyDraft(customApiKey);
+  }, [customApiKey]);
+
+  useEffect(() => {
+    setModelDraft(customModel);
+  }, [customModel]);
 
   const focusAddButton = useCallback(() => {
     addButtonRef.current?.focus();
@@ -64,6 +83,41 @@ export const CommandsSettings: React.FC = () => {
     const trimmed = keyDraft.trim();
     if (trimmed === (anthropicKey ?? "").trim()) return;
     void updateSetting("anthropic_api_key", trimmed === "" ? null : trimmed);
+  };
+
+  const persistBaseUrl = () => {
+    const trimmed = baseUrlDraft.trim().replace(/\/+$/, "");
+    if (trimmed === (customBaseUrl ?? "").trim()) return;
+    void updateSetting(
+      "openai_compat_base_url",
+      trimmed === "" ? null : trimmed,
+    );
+  };
+
+  const persistCustomKey = () => {
+    const trimmed = customKeyDraft.trim();
+    if (trimmed === (customApiKey ?? "").trim()) return;
+    void updateSetting(
+      "openai_compat_api_key",
+      trimmed === "" ? null : trimmed,
+    );
+  };
+
+  const persistModel = () => {
+    const trimmed = modelDraft.trim();
+    if (trimmed === (customModel ?? "").trim()) return;
+    void updateSetting("openai_compat_model", trimmed === "" ? null : trimmed);
+  };
+
+  const applyOllamaPreset = () => {
+    const url = "http://localhost:11434/v1";
+    const model = "qwen2.5:1.5b";
+    setBaseUrlDraft(url);
+    setModelDraft(model);
+    setCustomKeyDraft("");
+    void updateSetting("openai_compat_base_url", url);
+    void updateSetting("openai_compat_model", model);
+    void updateSetting("openai_compat_api_key", null);
   };
 
   return (
@@ -105,6 +159,9 @@ export const CommandsSettings: React.FC = () => {
               <option value="anthropic">
                 {t("settings.commands.provider.anthropic")}
               </option>
+              <option value="custom">
+                {t("settings.commands.provider.custom")}
+              </option>
               <option value="local">
                 {t("settings.commands.provider.local")}
               </option>
@@ -112,7 +169,9 @@ export const CommandsSettings: React.FC = () => {
             <p className="text-xs text-text/50 mt-1">
               {provider === "anthropic"
                 ? t("settings.commands.provider.anthropicDescription")
-                : t("settings.commands.provider.localDescription")}
+                : provider === "custom"
+                  ? t("settings.commands.provider.customDescription")
+                  : t("settings.commands.provider.localDescription")}
             </p>
           </div>
 
@@ -163,6 +222,105 @@ export const CommandsSettings: React.FC = () => {
               <p className="text-xs text-text/50 mt-1">
                 {t("settings.commands.provider.apiKeyHelp")}
               </p>
+            </div>
+          )}
+
+          {provider === "custom" && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={applyOllamaPreset}
+                  className="text-xs px-2 py-1 border border-border rounded-md hover:bg-mid-gray/10 text-text/80"
+                >
+                  {t("settings.commands.provider.ollamaPreset")}
+                </button>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="openai-compat-base-url"
+                  className="block text-xs text-text/60 mb-1"
+                >
+                  {t("settings.commands.provider.customBaseUrlLabel")}
+                </label>
+                <input
+                  id="openai-compat-base-url"
+                  type="text"
+                  value={baseUrlDraft}
+                  onChange={(e) => setBaseUrlDraft(e.target.value)}
+                  onBlur={persistBaseUrl}
+                  placeholder="http://localhost:11434/v1"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="w-full px-2 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-logo-primary"
+                />
+                <p className="text-xs text-text/50 mt-1">
+                  {t("settings.commands.provider.customBaseUrlHelp")}
+                </p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="openai-compat-model"
+                  className="block text-xs text-text/60 mb-1"
+                >
+                  {t("settings.commands.provider.customModelLabel")}
+                </label>
+                <input
+                  id="openai-compat-model"
+                  type="text"
+                  value={modelDraft}
+                  onChange={(e) => setModelDraft(e.target.value)}
+                  onBlur={persistModel}
+                  placeholder="qwen2.5:1.5b"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="w-full px-2 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-logo-primary"
+                />
+                <p className="text-xs text-text/50 mt-1">
+                  {t("settings.commands.provider.customModelHelp")}
+                </p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="openai-compat-api-key"
+                  className="block text-xs text-text/60 mb-1"
+                >
+                  {t("settings.commands.provider.customApiKeyLabel")}
+                </label>
+                <div className="relative">
+                  <input
+                    id="openai-compat-api-key"
+                    type={showCustomKey ? "text" : "password"}
+                    value={customKeyDraft}
+                    onChange={(e) => setCustomKeyDraft(e.target.value)}
+                    onBlur={persistCustomKey}
+                    placeholder={t(
+                      "settings.commands.provider.customApiKeyPlaceholder",
+                    )}
+                    autoComplete="off"
+                    spellCheck={false}
+                    className="w-full px-2 py-1.5 pr-8 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-logo-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomKey((s) => !s)}
+                    aria-label={
+                      showCustomKey
+                        ? t("settings.commands.provider.hideKey")
+                        : t("settings.commands.provider.showKey")
+                    }
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-text/40 hover:text-text"
+                  >
+                    {showCustomKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+                <p className="text-xs text-text/50 mt-1">
+                  {t("settings.commands.provider.customApiKeyHelp")}
+                </p>
+              </div>
             </div>
           )}
         </div>

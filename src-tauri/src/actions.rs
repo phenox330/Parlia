@@ -120,6 +120,37 @@ async fn apply_voice_command(ah: &AppHandle, settings: &AppSettings, text: &str)
             let model = settings.anthropic_model.clone();
             crate::cloud_llm::generate_anthropic(&key, &model, &prompt, &rest).await
         }
+        CommandsLlmProvider::Custom => {
+            let base_url = match settings.openai_compat_base_url.as_deref() {
+                Some(u) if !u.trim().is_empty() => u.to_string(),
+                _ => {
+                    let _ = ah.emit(
+                        "llm-error",
+                        "Base URL is missing. Add it in Settings > Commands.".to_string(),
+                    );
+                    return None;
+                }
+            };
+            let model = match settings.openai_compat_model.as_deref() {
+                Some(m) if !m.trim().is_empty() => m.to_string(),
+                _ => {
+                    let _ = ah.emit(
+                        "llm-error",
+                        "Model name is missing. Add it in Settings > Commands.".to_string(),
+                    );
+                    return None;
+                }
+            };
+            let api_key = settings.openai_compat_api_key.clone();
+            crate::cloud_llm::generate_openai_compatible(
+                &base_url,
+                api_key.as_deref(),
+                &model,
+                &prompt,
+                &rest,
+            )
+            .await
+        }
         CommandsLlmProvider::Local => {
             let llm_state = ah.try_state::<Arc<crate::managers::llm::LlmModelManager>>()?;
             let llm_mgr: Arc<crate::managers::llm::LlmModelManager> = (*llm_state).clone();

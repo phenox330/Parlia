@@ -269,6 +269,10 @@ pub enum CommandsLlmProvider {
     Local,
     /// Cloud inference via Anthropic's Messages API. Requires an API key.
     Anthropic,
+    /// Any OpenAI-compatible chat/completions endpoint — covers Ollama,
+    /// LM Studio, Groq, OpenRouter, DeepSeek, vLLM, etc. Needs base URL +
+    /// model name; the API key is optional (blank for local Ollama).
+    Custom,
 }
 
 impl Default for CommandsLlmProvider {
@@ -362,6 +366,19 @@ pub struct AppSettings {
     pub anthropic_api_key: Option<String>,
     #[serde(default = "default_anthropic_model")]
     pub anthropic_model: String,
+    /// Base URL for the OpenAI-compatible provider, without trailing slash.
+    /// Examples: `http://localhost:11434/v1` (Ollama),
+    /// `https://api.groq.com/openai/v1`, `https://openrouter.ai/api/v1`.
+    #[serde(default)]
+    pub openai_compat_base_url: Option<String>,
+    /// Optional bearer token sent as `Authorization: Bearer <key>`. Blank is
+    /// valid — Ollama and LM Studio don't require auth by default.
+    #[serde(default)]
+    pub openai_compat_api_key: Option<String>,
+    /// Model id as understood by the provider (e.g. `qwen2.5:1.5b`,
+    /// `llama-3.1-8b-instant`, `openai/gpt-4o-mini`).
+    #[serde(default)]
+    pub openai_compat_model: Option<String>,
 }
 
 fn default_model() -> String {
@@ -528,6 +545,9 @@ pub fn get_default_settings() -> AppSettings {
         commands_llm_provider: CommandsLlmProvider::Anthropic,
         anthropic_api_key: None,
         anthropic_model: default_anthropic_model(),
+        openai_compat_base_url: None,
+        openai_compat_api_key: None,
+        openai_compat_model: None,
     }
 }
 

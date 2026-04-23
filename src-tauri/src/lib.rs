@@ -354,6 +354,9 @@ pub fn run(cli_args: CliArgs) {
         commands::llm::change_commands_llm_provider_setting,
         commands::llm::change_anthropic_api_key_setting,
         commands::llm::change_anthropic_model_setting,
+        commands::llm::change_openai_compat_base_url_setting,
+        commands::llm::change_openai_compat_api_key_setting,
+        commands::llm::change_openai_compat_model_setting,
         helpers::clamshell::is_laptop,
     ]);
 

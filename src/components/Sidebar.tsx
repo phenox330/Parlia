@@ -109,6 +109,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {availableSections.map((section) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
+          // ParliaMark has padding inside its 60x60 viewBox so at 24px its
+          // visible glyph is small. Other sections use Lucide icons which
+          // fill their box — shrink those so every row's glyph reads at
+          // roughly the same visual weight as the General mark.
+          const iconSize = section.id === "general" ? 24 : 16;
 
           return (
             <div
@@ -120,7 +125,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }`}
               onClick={() => onSectionChange(section.id)}
             >
-              <Icon width={24} height={24} className="shrink-0" />
+              <span className="inline-flex items-center justify-center shrink-0 w-6 h-6">
+                <Icon width={iconSize} height={iconSize} />
+              </span>
               <p
                 className="text-sm font-medium truncate"
                 title={t(section.labelKey)}

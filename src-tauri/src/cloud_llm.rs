@@ -17,7 +17,7 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(60);
 /// abuse.
 const PARLIA_CLOUD_ENDPOINT: &str = "https://www.parlia.fr/api/v1/commands";
 const PARLIA_CLOUD_SHARED_TOKEN: &str =
-    "a260073dfcb446e088a8525a187654fb9d5002554c97d53571c7ff0085446ca9";
+    "16a4071adb03d207ebae446188e7942bef0f3343907c9a69051082c1afaf15ff";
 
 #[derive(Serialize)]
 struct AnthropicMessage<'a> {

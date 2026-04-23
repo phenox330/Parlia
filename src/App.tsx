@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { platform } from "@tauri-apps/plugin-os";
+import { listen } from "@tauri-apps/api/event";
 import {
   checkAccessibilityPermission,
   checkMicrophonePermission,
@@ -92,6 +93,17 @@ function App() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [settings?.debug_mode, updateSetting]);
+
+  // Surface voice-command LLM failures. Emitted by actions.rs when commands
+  // are disabled, no model is active, or inference errors — previously silent.
+  useEffect(() => {
+    const unlisten = listen<string>("llm-error", (event) => {
+      toast.error(event.payload, { duration: 8000 });
+    });
+    return () => {
+      void unlisten.then((fn) => fn());
+    };
+  }, []);
 
   const checkOnboardingStatus = async () => {
     try {

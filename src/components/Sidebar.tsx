@@ -9,7 +9,7 @@ import {
   MessageSquareCode,
 } from "lucide-react";
 import ParliaTextLogo from "./icons/ParliaTextLogo";
-import ParliaHand from "./icons/ParliaHand";
+import ParliaMark from "./icons/ParliaMark";
 import { useSettings } from "../hooks/useSettings";
 import {
   GeneralSettings,
@@ -41,7 +41,7 @@ interface SectionConfig {
 export const SECTIONS_CONFIG = {
   general: {
     labelKey: "sidebar.general",
-    icon: ParliaHand,
+    icon: ParliaMark,
     component: GeneralSettings,
     enabled: () => true,
   },
@@ -101,7 +101,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div className="flex flex-col w-40 h-full border-e border-border bg-sidebar-bg items-center px-2 pt-8">
-      <ParliaTextLogo width={120} className="m-4" />
+      <div className="flex items-center m-4">
+        <ParliaMark width={36} height={36} className="text-logo-primary" />
+        <ParliaTextLogo width={96} className="text-text -ml-1" />
+      </div>
       <div className="flex flex-col w-full items-center gap-1 pt-2 border-t border-border">
         {availableSections.map((section) => {
           const Icon = section.icon;

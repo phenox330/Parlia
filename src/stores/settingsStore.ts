@@ -113,6 +113,14 @@ const settingUpdaters: {
     commands.changeExperimentalEnabledSetting(value as boolean),
   show_tray_icon: (value) =>
     commands.changeShowTrayIconSetting(value as boolean),
+  commands_enabled: (value) =>
+    commands.changeCommandsEnabledSetting(value as boolean),
+  commands_llm_provider: (value) =>
+    commands.changeCommandsLlmProviderSetting(value as any),
+  anthropic_api_key: (value) =>
+    commands.changeAnthropicApiKeySetting(value as string | null),
+  anthropic_model: (value) =>
+    commands.changeAnthropicModelSetting(value as string),
 };
 
 export const useSettingsStore = create<SettingsStore>()(

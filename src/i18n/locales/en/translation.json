@@ -337,19 +337,76 @@
       "description": "Say a keyword to automatically transform your transcription.",
       "enable": "Voice Commands",
       "enableDescription": "Enable voice commands to transform your transcriptions with a keyword.",
+      "provider": {
+        "title": "AI Provider",
+        "label": "Run commands with",
+        "anthropic": "Anthropic (Cloud — Claude Haiku)",
+        "local": "Local (on-device, experimental)",
+        "anthropicDescription": "Uses Claude Haiku via the Anthropic API. Fast, great at French, ~$0.001 per command. Requires an API key.",
+        "localDescription": "On-device inference via llama.cpp. Known to crash during model load on some macOS builds.",
+        "apiKeyLabel": "Anthropic API Key",
+        "apiKeyHelp": "Stored locally on your Mac. Get a key at console.anthropic.com — add $5 of credit and you're good for months.",
+        "getKey": "Get a key",
+        "showKey": "Show API key",
+        "hideKey": "Hide API key"
+      },
       "addCommand": "Add command",
       "keyword": "Keyword",
       "prompt": "Instructions",
       "keywordPlaceholder": "e.g. email",
       "promptPlaceholder": "e.g. Transform this transcription into a formal email...",
       "delete": "Delete",
+      "enableAria": "Enable this command",
+      "deleteAria": "Delete this command",
+      "deleteConfirm": "Delete this voice command?",
+      "confirmDelete": "Yes, delete",
+      "empty": "No voice commands yet. Add one to transform your transcriptions with a keyword.",
+      "validation": {
+        "keywordRequired": "Enter a keyword",
+        "promptRequired": "Enter instructions"
+      },
+      "errors": {
+        "loadFailed": "Could not load voice commands.",
+        "addFailed": "Could not add voice command.",
+        "updateFailed": "Could not save changes.",
+        "deleteFailed": "Could not delete voice command."
+      },
       "llmModel": {
         "title": "Local AI Model",
         "download": "Download",
         "ready": "Ready",
         "activate": "Activate",
         "notDownloaded": "Not downloaded",
-        "partial": "Partial download detected"
+        "partial": "Partial download detected",
+        "loading": "Loading models…",
+        "cancelDownloadAria": "Cancel download",
+        "deleteModelAria": "Delete model",
+        "progressAria": "Downloading {{name}}",
+        "deleteConfirmTitle": "Delete model file?",
+        "deleteConfirm": "Delete this model file?",
+        "confirmDelete": "Yes, delete",
+        "descriptions": {
+          "phi3Mini": "Compact and fast model (3.8B parameters). Good for text transformations.",
+          "qwen25_1_5b": "Fast multilingual model (1.5B parameters, 940 MB). Great at French and text transformations.",
+          "unknown": "AI model"
+        },
+        "toasts": {
+          "downloadStarted": "Downloading {{name}}…",
+          "downloadComplete": "{{name}} downloaded",
+          "downloadCancelled": "{{name}} download cancelled",
+          "activating": "Activating {{name}}… (loads the model into memory, may take up to 15 s)",
+          "activated": "{{name}} activated"
+        },
+        "announce": {
+          "downloading": "Downloading {{name}}, {{percent}} percent"
+        },
+        "errors": {
+          "loadFailed": "Could not load AI models.",
+          "downloadFailed": "Download failed.",
+          "cancelFailed": "Could not cancel download.",
+          "activateFailed": "Could not activate model.",
+          "deleteFailed": "Could not delete model."
+        }
       }
     },
     "debug": {

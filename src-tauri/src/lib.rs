@@ -1,6 +1,7 @@
 mod actions;
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 mod apple_intelligence;
+mod cloud_llm;
 mod audio_feedback;
 pub mod audio_toolkit;
 pub mod cli;
@@ -349,6 +350,10 @@ pub fn run(cli_args: CliArgs) {
         commands::llm::add_voice_command,
         commands::llm::update_voice_command,
         commands::llm::delete_voice_command,
+        commands::llm::change_commands_enabled_setting,
+        commands::llm::change_commands_llm_provider_setting,
+        commands::llm::change_anthropic_api_key_setting,
+        commands::llm::change_anthropic_model_setting,
         helpers::clamshell::is_laptop,
     ]);
 

@@ -261,6 +261,22 @@ pub struct VoiceCommand {
     pub enabled: bool,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum CommandsLlmProvider {
+    /// On-device inference via llama.cpp. Known to crash during model load
+    /// on some macOS aarch64 builds; kept as an opt-in for future fixes.
+    Local,
+    /// Cloud inference via Anthropic's Messages API. Requires an API key.
+    Anthropic,
+}
+
+impl Default for CommandsLlmProvider {
+    fn default() -> Self {
+        CommandsLlmProvider::Anthropic
+    }
+}
+
 /* still handy for composing the initial JSON in the store ------------- */
 #[derive(Serialize, Deserialize, Debug, Clone, Type)]
 pub struct AppSettings {
@@ -338,6 +354,14 @@ pub struct AppSettings {
     pub commands: Vec<VoiceCommand>,
     #[serde(default)]
     pub commands_llm_model_id: Option<String>,
+    #[serde(default)]
+    pub commands_llm_provider: CommandsLlmProvider,
+    /// Anthropic API key — stored plaintext in the settings store.
+    /// Ship a keychain-backed secret store before distributing widely.
+    #[serde(default)]
+    pub anthropic_api_key: Option<String>,
+    #[serde(default = "default_anthropic_model")]
+    pub anthropic_model: String,
 }
 
 fn default_model() -> String {
@@ -501,7 +525,16 @@ pub fn get_default_settings() -> AppSettings {
         commands_enabled: true,
         commands: Vec::new(),
         commands_llm_model_id: None,
+        commands_llm_provider: CommandsLlmProvider::Anthropic,
+        anthropic_api_key: None,
+        anthropic_model: default_anthropic_model(),
     }
+}
+
+fn default_anthropic_model() -> String {
+    // Fast + cheap + good at French rewriting. Pinned to the dated model id
+    // so upgrades are deliberate.
+    "claude-haiku-4-5-20251001".to_string()
 }
 
 pub fn load_or_create_app_settings(app: &AppHandle) -> AppSettings {

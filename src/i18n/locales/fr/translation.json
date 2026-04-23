@@ -337,19 +337,76 @@
       "description": "Dites un mot-clé pour transformer automatiquement votre transcription.",
       "enable": "Commandes vocales",
       "enableDescription": "Activez les commandes vocales pour transformer vos transcriptions avec un mot-clé.",
+      "provider": {
+        "title": "Fournisseur IA",
+        "label": "Exécuter les commandes avec",
+        "anthropic": "Anthropic (Cloud — Claude Haiku)",
+        "local": "Local (sur l'appareil, expérimental)",
+        "anthropicDescription": "Utilise Claude Haiku via l'API Anthropic. Rapide, excellent en français, ~0,001 € par commande. Nécessite une clé API.",
+        "localDescription": "Inférence sur l'appareil via llama.cpp. Crash connu au chargement du modèle sur certains macOS.",
+        "apiKeyLabel": "Clé API Anthropic",
+        "apiKeyHelp": "Stockée localement sur votre Mac. Obtenez une clé sur console.anthropic.com — ajoutez 5 $ de crédit et ça tient des mois.",
+        "getKey": "Obtenir une clé",
+        "showKey": "Afficher la clé",
+        "hideKey": "Masquer la clé"
+      },
       "addCommand": "Ajouter une commande",
       "keyword": "Mot-clé",
       "prompt": "Instructions",
       "keywordPlaceholder": "ex: email",
       "promptPlaceholder": "ex: Transforme cette transcription en email formel...",
       "delete": "Supprimer",
+      "enableAria": "Activer cette commande",
+      "deleteAria": "Supprimer cette commande",
+      "deleteConfirm": "Supprimer cette commande vocale ?",
+      "confirmDelete": "Oui, supprimer",
+      "empty": "Aucune commande vocale pour l'instant. Ajoutez-en une pour transformer vos transcriptions avec un mot-clé.",
+      "validation": {
+        "keywordRequired": "Saisissez un mot-clé",
+        "promptRequired": "Saisissez des instructions"
+      },
+      "errors": {
+        "loadFailed": "Impossible de charger les commandes vocales.",
+        "addFailed": "Impossible d'ajouter la commande.",
+        "updateFailed": "Impossible d'enregistrer les modifications.",
+        "deleteFailed": "Impossible de supprimer la commande."
+      },
       "llmModel": {
         "title": "Modèle IA local",
         "download": "Télécharger",
         "ready": "Prêt",
         "activate": "Activer",
         "notDownloaded": "Non téléchargé",
-        "partial": "Téléchargement partiel détecté"
+        "partial": "Téléchargement partiel détecté",
+        "loading": "Chargement des modèles…",
+        "cancelDownloadAria": "Annuler le téléchargement",
+        "deleteModelAria": "Supprimer le modèle",
+        "progressAria": "Téléchargement de {{name}}",
+        "deleteConfirmTitle": "Supprimer le fichier du modèle ?",
+        "deleteConfirm": "Supprimer ce fichier de modèle ?",
+        "confirmDelete": "Oui, supprimer",
+        "descriptions": {
+          "phi3Mini": "Modèle compact et rapide (3,8 Mds de paramètres). Adapté aux transformations de texte.",
+          "qwen25_1_5b": "Modèle multilingue rapide (1,5 Md de paramètres, 940 Mo). Excellent en français et pour les transformations de texte.",
+          "unknown": "Modèle IA"
+        },
+        "toasts": {
+          "downloadStarted": "Téléchargement de {{name}}…",
+          "downloadComplete": "{{name}} téléchargé",
+          "downloadCancelled": "Téléchargement de {{name}} annulé",
+          "activating": "Activation de {{name}}… (chargement en mémoire, jusqu'à 15 s)",
+          "activated": "{{name}} activé"
+        },
+        "announce": {
+          "downloading": "Téléchargement de {{name}}, {{percent}} %"
+        },
+        "errors": {
+          "loadFailed": "Impossible de charger les modèles IA.",
+          "downloadFailed": "Échec du téléchargement.",
+          "cancelFailed": "Impossible d'annuler le téléchargement.",
+          "activateFailed": "Impossible d'activer le modèle.",
+          "deleteFailed": "Impossible de supprimer le modèle."
+        }
       }
     },
     "debug": {

@@ -76,7 +76,11 @@ specta = "=2.0.0-rc.22"
 specta-typescript = "0.0.9"
 tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
 tauri-plugin-dialog = "2.6"
-llama-cpp-2 = "0.1"
+llama-cpp-2 = "0.1.145"
+llama-cpp-sys-2 = "0.1.145"
+uuid = { version = "1", features = ["v4"] }
+sha2 = "0.10"
+bytes = "1"
 
 [target.'cfg(unix)'.dependencies]
 signal-hook = "0.3"

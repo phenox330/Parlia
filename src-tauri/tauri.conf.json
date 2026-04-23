@@ -40,7 +40,7 @@
   },
   "bundle": {
     "active": true,
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": false,
     "targets": "all",
     "resources": ["resources/**/*"],
     "license": "MIT",
@@ -55,7 +55,7 @@
       "files": {},
       "hardenedRuntime": true,
       "minimumSystemVersion": "11.0",
-      "signingIdentity": "-",
+      "signingIdentity": "Developer ID Application: Anthony Gombert (HWYPH89BH9)",
       "entitlements": "Entitlements.plist"
     },
     "linux": {

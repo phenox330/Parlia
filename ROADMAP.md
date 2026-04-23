@@ -1,6 +1,6 @@
 # Parlia — Roadmap
 
-Last updated: 2026-04-23
+Last updated: 2026-04-23 (signing + notarization complete)
 
 ## TL;DR
 
@@ -18,7 +18,8 @@ notarization).
 - **Voice commands** — working via Anthropic cloud
 - **Local LLM** — kept as opt-in, still crashes on macOS aarch64
   (llama.cpp vsnprintf bug, not fixable from Rust)
-- **Distribution** — blocked on Apple Developer Program validation
+- **Distribution** — signed + notarized build validated locally; ready
+  for GitHub Release
 - **Brand** — unified around blue (#116cf5), Parlia identity in place
 - **Legal** — MIT licence present in repo, not yet surfaced in the app
   (blocker for public distribution)
@@ -83,14 +84,25 @@ notarization).
   is fine)
 - Drag-and-drop install into `/Applications` works
 
+### Signing + notarization (Developer ID)
+- Apple Developer Program validated (Team ID `HWYPH89BH9`)
+- Created `Developer ID Application` cert via G2 Sub-CA, installed
+  intermediates (`DeveloperIDG2CA`, `AppleWWDRCAG3`, `AppleRootCA-G3`)
+  locally — Xcode normally auto-installs these, but we bypass Xcode
+- `tauri.conf.json` : `signingIdentity` set to
+  `Developer ID Application: Anthony Gombert (HWYPH89BH9)`
+- `createUpdaterArtifacts` temporarily set to `false` (no updater
+  signing keys yet — revisit when we add auto-update)
+- Notarization via `APPLE_ID` / `APPLE_PASSWORD` (app-specific) /
+  `APPLE_TEAM_ID` env vars — `.app` notarized automatically by
+  Tauri; `.dmg` notarized manually via `xcrun notarytool submit`
+- Both `.app` and `.dmg` staple + validate, `spctl` reports
+  `source=Notarized Developer ID`, opens on a fresh Mac install
+  without any Gatekeeper warning
+
 ---
 
 ## Up next
-
-### Blocked on external dependencies
-
-- **Apple Developer Program validation** (enrolled, awaiting
-  confirmation — usually 24-48 h, sometimes 3-5 days)
 
 ### Can do now — legal compliance (required before public
 distribution)
@@ -120,17 +132,16 @@ distribution)
     architecture significantly
   - Positioning (vs Superwhisper / Whisper Flow / Raycast AI)
 
-### Unblocks once Apple Developer validated
+### Release — ready to ship
 
-1. Configure signing in `tauri.conf.json`:
-   - Replace `signingIdentity: "-"` (adhoc) with real Developer ID
-   - Wire up notarization env vars
-     (`APPLE_ID`/`APPLE_PASSWORD`/`APPLE_TEAM_ID` or API-key trio)
-2. First signed + notarized build → staple the ticket
-3. Upload `.dmg` to GitHub Releases (tag `v0.7.9` or bump to `v0.8.0`)
+1. ~~Configure signing + notarization~~ ✅ done
+2. ~~First signed + notarized build~~ ✅ done
+3. Upload `.dmg` to GitHub Releases (tag `v0.7.9`)
 4. Wire the Download button on the landing page to the Release URL
 5. End-to-end test on a second Mac (ideally not yours) to validate
-   Gatekeeper UX
+   Gatekeeper UX on a truly fresh machine
+6. Revoke the exposed app-specific password and regenerate a new
+   one before the next build (was shared in chat)
 
 ---
 

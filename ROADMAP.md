@@ -1,6 +1,6 @@
 # Parlia — Roadmap
 
-Last updated: 2026-04-23 (v0.7.11 shipped — Parlia Cloud = zero-config default)
+Last updated: 2026-04-23 (v0.7.12 shipped — Phase 0 hygiene: token rotation + per-IP rate limit)
 
 ## TL;DR
 
@@ -10,6 +10,9 @@ Default provider is now Parlia Cloud — a hosted Vercel Edge proxy that
 relays to Groq Llama 3.1 8B Instant with sub-second latency, no user
 config required. Users can still opt into Anthropic (BYO key),
 OpenAI-compatible endpoints (Ollama/Groq/OpenRouter), or local llama.cpp.
+Proxy is gated by a shared Bearer token embedded in the binary, throttled
+to 20 req/min per IP via Upstash Redis. Per-user magic-link auth + quotas
+land in Tranche 2.
 
 ---
 
@@ -20,11 +23,38 @@ OpenAI-compatible endpoints (Ollama/Groq/OpenRouter), or local llama.cpp.
   Anthropic (BYO key), OpenAI-compatible (Ollama/Groq/OpenRouter/etc.)
 - **Local LLM** — kept as opt-in, still crashes on macOS aarch64
   (llama.cpp vsnprintf bug, not fixable from Rust)
-- **Distribution** — v0.7.11 signed + notarized on GitHub Releases;
+- **Parlia Cloud backend** — Vercel Edge route at
+  `www.parlia.fr/api/v1/commands` relays to Groq Llama 3.1 8B Instant;
+  Upstash Redis per-IP rate limit (20 req/min/IP); health endpoint at
+  `/api/v1/health` gated by the shared token
+- **Distribution** — v0.7.12 signed + notarized on GitHub Releases;
   landing at www.parlia.fr
 - **Brand** — unified around blue (#116cf5), Parlia identity in place
 - **Legal** — MIT licence present in repo, not yet surfaced in the app
   (blocker for public distribution)
+
+---
+
+## What shipped on 2026-04-23 (v0.7.12)
+
+### Phase 0 hygiene — token rotation + rate limit
+- Rotated the Parlia Cloud shared Bearer token (old v0.7.10/v0.7.11
+  token was exposed in authoring chats and could no longer be
+  trusted). Old token now returns 401, new token works end-to-end.
+- Per-IP rate limit via Upstash Redis on `/api/v1/commands`: 20
+  requests per IP per 60 s sliding window. Coarse but protects the
+  Groq free-tier budget while per-user auth lands in tranche 2.
+- Tolerates both env var conventions for Upstash (`UPSTASH_REDIS_REST_*`
+  manual + `KV_REST_API_*` Vercel Marketplace integration), so the
+  same code works regardless of how Upstash was connected.
+- New diagnostic endpoint at `/api/v1/health` (gated by the shared
+  token): reports which env vars are present and whether Upstash is
+  reachable without leaking any values. Useful for future auth debug.
+- Fails open if Upstash is unreachable / misconfigured — better a
+  rate-limit miss than a user-facing outage.
+- v0.7.11 installs stop serving Parlia Cloud commands until they
+  update to v0.7.12. Given the user base is ~1 person today, no
+  grace window.
 
 ---
 
@@ -165,57 +195,97 @@ OpenAI-compatible endpoints (Ollama/Groq/OpenRouter), or local llama.cpp.
 
 ## Up next
 
-### Can do now — legal compliance (required before public
-distribution)
+### Dogfooding window (this week — cheap, high signal)
 
-- **Surface MIT licence in the app**: Add an "Open source & credits"
-  section in `AboutSettings` that shows:
-  - Copyright © 2025 CJ Pais (original Handy author, MIT)
-  - List of major dependencies (llama.cpp, Tauri, Whisper, reqwest,
-    React, etc.) with their licences
-  - Full MIT text in a modal or linked page
-- **Bundle LICENSE file inside `.app`**: currently not copied into
-  `Parlia.app/Contents/Resources/`. Configure `tauri.conf.json` to
-  include it as a resource, or generate a `LICENSES.md` at build time
-  via `cargo-about`.
-- **Optional**: credits line in the landing-page footer
+- Use Parlia Cloud daily for 48-72 h; keep a running list of
+  friction points, bugs, and quality issues with Groq Llama 3.1 8B
+- End-to-end test on a **fresh Mac** (not the dev machine) with the
+  landing-page download flow — validates Gatekeeper UX on a real
+  user's first install
+- Try Parlia Cloud vs Anthropic Haiku on 5-10 of your own commands
+  side-by-side and write down the quality delta — informs whether
+  Groq is good enough as the default for tranche 2 or whether we
+  should route free users to Anthropic via the proxy instead
 
-### Can do now — product work
+### Tranche 2 — auth + quota (~2-3 days, blocked on decisions below)
 
-- **Landing page** (priority — needed to surface the download link):
-  - Headline + 15-30 s demo GIF showing "Email …" flow
-  - Download CTA wired to the release DMG:
-    ```html
-    <a href="https://github.com/phenox330/Parlia/releases/download/v0.7.9/Parlia_0.7.9_aarch64.dmg"
-       download>
-      Download for Mac
-    </a>
-    ```
-  - MIT footer + credit line (CJ Pais, original Handy author)
-  - The `download` attribute + GitHub's `Content-Disposition: attachment`
-    header means clicking triggers a direct DMG download — no detour
-    through the GitHub release page
-- **Thorough dogfooding**: use Parlia daily for 2-3 days, keep a list
-  of friction points and bugs
-- **Business-model decisions**:
-  - Price model (free / freemium / one-time / subscription)
-  - Provider UX: keep user-supplied Anthropic key (current) vs build
-    a hosted proxy (so non-tech users don't need a key) — impacts
-    architecture significantly
-  - Positioning (vs Superwhisper / Whisper Flow / Raycast AI)
+Replaces the shared-token MVP with per-user magic-link auth and
+per-user quotas. Detailed plan in chat; summary here:
 
-### Release — ready to ship
+**Phase A — backend on `parlia_lp`** (~1 day)
+- `POST /api/v1/auth/request` (email → magic link via Resend)
+- `GET  /api/v1/auth/verify` (token → JWT → redirect to
+  `parlia://auth?jwt=…`)
+- `GET  /api/v1/me` (JWT → email, plan, quota used/limit)
+- `POST /api/v1/commands`: swap Bearer shared token for per-user JWT,
+  `INCR quota:{user_id}:{YYYY-MM-DD}` with 48 h TTL, 429 on overage
+- Storage: Upstash Redis (same instance as the rate limit); schema
+  all hash-based, zero migrations
 
-1. ~~Configure signing + notarization~~ ✅ done
-2. ~~First signed + notarized build~~ ✅ done
-3. ~~Upload `.dmg` to GitHub Releases (tag `v0.7.9`)~~ ✅ done
-   — live at https://github.com/phenox330/Parlia/releases/tag/v0.7.9
-4. **Build the landing page and wire the download CTA**
-   to the release URL (see Landing page section above)
-5. End-to-end test on a second Mac (ideally not yours) to validate
-   Gatekeeper UX on a truly fresh machine
-6. Revoke the exposed app-specific password and regenerate a new
-   one before the next build (was shared in chat)
+**Phase B — desktop app** (~1 day)
+- `tauri-plugin-deep-link` registering `parlia://` scheme
+- New `auth.rs` manager storing JWT in macOS Keychain via the
+  `keyring` crate
+- Login screen when Parlia Cloud is selected and no JWT exists
+- Quota bar in Settings (`43/50 used today`), toast on 429
+- `generate_parlia_cloud()` sends `Bearer <JWT>` instead of the
+  shared token; intercept 401 → emit `auth-required` event
+
+**Phase C — ship v0.8.0** (~½ day)
+- Remove the shared token entirely (no grace window)
+- Build, sign, notarize, release, landing page bump
+
+**Decisions to take before starting**:
+- **Quota** — proposed 50 commands/day free, Pro unlimited or
+  1 500/mo. Ratify or adjust.
+- **Email sender** — `hello@parlia.fr` (needs SPF + DKIM DNS records
+  on the .fr domain, ~5 min) or start with `onboarding@resend.dev`
+  and migrate later.
+- **Accounts needed** — Upstash (already done), Resend (free tier,
+  3 000 emails/month — to create).
+- **When to split the API** — proxy code currently lives in
+  `parlia_lp/src/app/api/v1/…`. Extract into its own `parlia-api`
+  repo at the same time as Tranche 2 backend (clean boundary) or
+  defer to Tranche 3 (one less move).
+
+### Tranche 3 — billing (~1-2 days, after Tranche 2 has 10+ users)
+
+- Stripe Checkout + `customer.subscription.updated` webhook
+- Pricing page on the landing (`/pricing`)
+- Upgrade CTA in the app when quota is exhausted
+- CGU + politique de confidentialité (France / RGPD) — you're
+  processing user data from here on
+
+### Legal / distribution prerequisites (still open)
+
+- **Surface MIT licence in the app**: "Open source & credits"
+  section in `AboutSettings` with copyright (© 2025 CJ Pais,
+  original Handy author), major deps + their licences, full MIT
+  text in a modal or linked page
+- **Bundle LICENSE inside `.app`**: currently not copied into
+  `Parlia.app/Contents/Resources/`. Either list it as a Tauri
+  resource, or generate `LICENSES.md` at build time via
+  `cargo-about`
+- **Credit line in the landing-page footer** (optional but cheap)
+
+### Operational chores
+
+- **Revoke the old Apple Developer app-specific password**
+  `fmhn-bokc-cvvd-gpll` on https://account.apple.com — it was
+  shared multiple times in chat. Generate a fresh one for the
+  next release.
+- **Landing page polish**: 15-30 s demo GIF ("Email …" flow),
+  visible value prop above the fold, MIT footer.
+- **Vercel domain consistency**: `parlia.fr` → 307 → `www.parlia.fr`.
+  Decide whether to keep the www prefix as canonical or flatten to
+  apex. Only a UX / SEO detail, not blocking.
+- **Split `parlia-api` from `parlia_lp`** — do it at the same
+  commit that introduces Tranche 2 auth (clean architectural
+  boundary + separate deploy cadence).
+- **Auto-updater** — `createUpdaterArtifacts` is still `false` in
+  `tauri.conf.json`. Users have to manually re-download each
+  release. Wire this when releases become more frequent (after
+  Tranche 2 probably).
 
 ---
 

@@ -1,6 +1,6 @@
 # Parlia — Roadmap
 
-Last updated: 2026-04-23 (signing + notarization complete)
+Last updated: 2026-04-23 (v0.7.9 shipped on GitHub Releases)
 
 ## TL;DR
 
@@ -119,10 +119,21 @@ distribution)
   via `cargo-about`.
 - **Optional**: credits line in the landing-page footer
 
-### Can do now — product work while waiting
+### Can do now — product work
 
-- **Landing page**: headline + 15-30 s demo GIF showing "Email …"
-  flow + Download button (provisionally disabled) + MIT footer
+- **Landing page** (priority — needed to surface the download link):
+  - Headline + 15-30 s demo GIF showing "Email …" flow
+  - Download CTA wired to the release DMG:
+    ```html
+    <a href="https://github.com/phenox330/Parlia/releases/download/v0.7.9/Parlia_0.7.9_aarch64.dmg"
+       download>
+      Download for Mac
+    </a>
+    ```
+  - MIT footer + credit line (CJ Pais, original Handy author)
+  - The `download` attribute + GitHub's `Content-Disposition: attachment`
+    header means clicking triggers a direct DMG download — no detour
+    through the GitHub release page
 - **Thorough dogfooding**: use Parlia daily for 2-3 days, keep a list
   of friction points and bugs
 - **Business-model decisions**:
@@ -136,8 +147,10 @@ distribution)
 
 1. ~~Configure signing + notarization~~ ✅ done
 2. ~~First signed + notarized build~~ ✅ done
-3. Upload `.dmg` to GitHub Releases (tag `v0.7.9`)
-4. Wire the Download button on the landing page to the Release URL
+3. ~~Upload `.dmg` to GitHub Releases (tag `v0.7.9`)~~ ✅ done
+   — live at https://github.com/phenox330/Parlia/releases/tag/v0.7.9
+4. **Build the landing page and wire the download CTA**
+   to the release URL (see Landing page section above)
 5. End-to-end test on a second Mac (ideally not yours) to validate
    Gatekeeper UX on a truly fresh machine
 6. Revoke the exposed app-specific password and regenerate a new

@@ -1,32 +1,58 @@
 # Parlia — Roadmap
 
-Last updated: 2026-04-23 (v0.7.9 shipped on GitHub Releases)
+Last updated: 2026-04-23 (v0.7.10 shipped — adds Ollama / OpenAI-compatible provider)
 
 ## TL;DR
 
 Speech-to-text Mac app with AI-powered custom commands (e.g. dictate
 "Email …" → get a formatted email). Forked from Handy/Voixy, rebranded.
-Core flow works end-to-end via Anthropic cloud inference. Shipping the
-public version blocked on Apple Developer validation (signing +
-notarization).
+Users can run commands via Anthropic cloud, any OpenAI-compatible
+endpoint (Ollama local, Groq, OpenRouter…), or a local llama.cpp model.
+App is signed + notarized and live on GitHub Releases.
 
 ---
 
 ## Status snapshot
 
 - **Core app** — working (transcription + pastes + history)
-- **Voice commands** — working via Anthropic cloud
+- **Voice commands** — Anthropic cloud + OpenAI-compatible provider
+  (Ollama / Groq / OpenRouter / LM Studio / DeepSeek / vLLM)
 - **Local LLM** — kept as opt-in, still crashes on macOS aarch64
   (llama.cpp vsnprintf bug, not fixable from Rust)
-- **Distribution** — signed + notarized build validated locally; ready
-  for GitHub Release
+- **Distribution** — v0.7.10 signed + notarized on GitHub Releases
 - **Brand** — unified around blue (#116cf5), Parlia identity in place
 - **Legal** — MIT licence present in repo, not yet surfaced in the app
   (blocker for public distribution)
 
 ---
 
-## What shipped on 2026-04-23
+## What shipped on 2026-04-23 (v0.7.10)
+
+### Custom LLM provider (OpenAI-compatible)
+- New `CommandsLlmProvider::Custom` variant — one code path covers
+  any `/chat/completions` endpoint: Ollama (local, free, private),
+  LM Studio, Groq, OpenRouter, DeepSeek, vLLM…
+- `src-tauri/src/cloud_llm.rs` — `generate_openai_compatible()`,
+  60 s timeout, 2048 max-tokens cap; API key optional (blank skips
+  the `Authorization` header so local Ollama / LM Studio work out
+  of the box)
+- `actions.rs` dispatches by provider, with friendly error surfaces
+  when base URL or model are missing
+- Settings UI: dropdown gains "Custom (Ollama, Groq, OpenRouter…)"
+  with Base URL / Model / API Key inputs and a one-click Ollama
+  preset (`http://localhost:11434/v1` + `qwen2.5:1.5b`)
+- EN + FR translations
+- Removes the "bring your own Anthropic key" friction — users with
+  Ollama already installed are zero-cost, zero-friction
+
+### Build + release
+- Signed + notarized `.app` and `.dmg` for v0.7.10 (aarch64)
+- Uploaded to GitHub Releases tag `v0.7.10`
+- Landing page `parlia_lp` download CTA updated to v0.7.10 DMG
+
+---
+
+## What shipped on 2026-04-23 (v0.7.9)
 
 ### Voice commands feature
 - Added master toggle "Voice Commands" in Settings > Commands (was

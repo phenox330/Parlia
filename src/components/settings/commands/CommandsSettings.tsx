@@ -17,7 +17,7 @@ export const CommandsSettings: React.FC = () => {
   const commandsEnabled = getSetting("commands_enabled") ?? true;
   const provider: CommandsLlmProvider =
     (getSetting("commands_llm_provider") as CommandsLlmProvider | undefined) ??
-    "anthropic";
+    "parlia";
   const anthropicKey = getSetting("anthropic_api_key") ?? "";
   const customBaseUrl = getSetting("openai_compat_base_url") ?? "";
   const customApiKey = getSetting("openai_compat_api_key") ?? "";
@@ -156,6 +156,9 @@ export const CommandsSettings: React.FC = () => {
               }
               className="w-full px-2 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-logo-primary"
             >
+              <option value="parlia">
+                {t("settings.commands.provider.parlia")}
+              </option>
               <option value="anthropic">
                 {t("settings.commands.provider.anthropic")}
               </option>
@@ -167,11 +170,13 @@ export const CommandsSettings: React.FC = () => {
               </option>
             </select>
             <p className="text-xs text-text/50 mt-1">
-              {provider === "anthropic"
-                ? t("settings.commands.provider.anthropicDescription")
-                : provider === "custom"
-                  ? t("settings.commands.provider.customDescription")
-                  : t("settings.commands.provider.localDescription")}
+              {provider === "parlia"
+                ? t("settings.commands.provider.parliaDescription")
+                : provider === "anthropic"
+                  ? t("settings.commands.provider.anthropicDescription")
+                  : provider === "custom"
+                    ? t("settings.commands.provider.customDescription")
+                    : t("settings.commands.provider.localDescription")}
             </p>
           </div>
 

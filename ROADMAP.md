@@ -1,28 +1,63 @@
 # Parlia — Roadmap
 
-Last updated: 2026-04-23 (v0.7.10 shipped — adds Ollama / OpenAI-compatible provider)
+Last updated: 2026-04-23 (v0.7.11 shipped — Parlia Cloud = zero-config default)
 
 ## TL;DR
 
 Speech-to-text Mac app with AI-powered custom commands (e.g. dictate
 "Email …" → get a formatted email). Forked from Handy/Voixy, rebranded.
-Users can run commands via Anthropic cloud, any OpenAI-compatible
-endpoint (Ollama local, Groq, OpenRouter…), or a local llama.cpp model.
-App is signed + notarized and live on GitHub Releases.
+Default provider is now Parlia Cloud — a hosted Vercel Edge proxy that
+relays to Groq Llama 3.1 8B Instant with sub-second latency, no user
+config required. Users can still opt into Anthropic (BYO key),
+OpenAI-compatible endpoints (Ollama/Groq/OpenRouter), or local llama.cpp.
 
 ---
 
 ## Status snapshot
 
 - **Core app** — working (transcription + pastes + history)
-- **Voice commands** — Anthropic cloud + OpenAI-compatible provider
-  (Ollama / Groq / OpenRouter / LM Studio / DeepSeek / vLLM)
+- **Voice commands** — Parlia Cloud (default, zero-config),
+  Anthropic (BYO key), OpenAI-compatible (Ollama/Groq/OpenRouter/etc.)
 - **Local LLM** — kept as opt-in, still crashes on macOS aarch64
   (llama.cpp vsnprintf bug, not fixable from Rust)
-- **Distribution** — v0.7.10 signed + notarized on GitHub Releases
+- **Distribution** — v0.7.11 signed + notarized on GitHub Releases;
+  landing at www.parlia.fr
 - **Brand** — unified around blue (#116cf5), Parlia identity in place
 - **Legal** — MIT licence present in repo, not yet surfaced in the app
   (blocker for public distribution)
+
+---
+
+## What shipped on 2026-04-23 (v0.7.11)
+
+### Parlia Cloud — hosted proxy (new default)
+- Vercel Edge route at `www.parlia.fr/api/v1/commands` relays to
+  Groq Llama 3.1 8B Instant (<500 ms p50, free tier)
+- Auth is a single Bearer token shared between the app binary and
+  the Vercel env (`PARLIA_SHARED_TOKEN`). Trivial to extract from a
+  decompiled build — rotate before scaling and move to per-user
+  magic-link auth in the next tranche.
+- Env vars: `GROQ_API_KEY` + `PARLIA_SHARED_TOKEN` on the
+  `parlia_lp` Vercel project (same project that serves the
+  landing page — pragmatic for tranche 1, will be split into a
+  dedicated `parlia-api` repo when auth + billing land).
+- New `CommandsLlmProvider::Parlia` variant, set as default for new
+  installs and first in the provider dropdown
+- Tested end-to-end: 158-239 ms round-trip, responds in FR as
+  expected
+
+### SEO fix
+- `metadataBase` in `parlia_lp/src/app/layout.tsx` was pointing at
+  `parlia.app` (a domain owned by another product — a Spanish AAC
+  app). Corrected to `www.parlia.fr` (the real production domain).
+
+### Known follow-ups
+- Shared Bearer token is in plaintext in the binary. OK for testing;
+  **must** be rotated + wrapped by real auth before a broad launch.
+- Rate-limiting on `/api/v1/commands` is none for now. Add Upstash
+  Redis + per-IP throttle if abuse shows up.
+- `bundle_dmg.sh` still flaky (needs a clean `/Volumes` before each
+  build). Worked around manually this release.
 
 ---
 

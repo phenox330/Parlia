@@ -264,6 +264,10 @@ pub struct VoiceCommand {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Type, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum CommandsLlmProvider {
+    /// Parlia Cloud — hosted proxy that relays to Groq (Llama 3.1 8B Instant)
+    /// with a hardcoded shared Bearer token. Zero config for the user.
+    /// Replace the shared-token auth with magic-link user auth before scaling.
+    Parlia,
     /// On-device inference via llama.cpp. Known to crash during model load
     /// on some macOS aarch64 builds; kept as an opt-in for future fixes.
     Local,
@@ -277,7 +281,7 @@ pub enum CommandsLlmProvider {
 
 impl Default for CommandsLlmProvider {
     fn default() -> Self {
-        CommandsLlmProvider::Anthropic
+        CommandsLlmProvider::Parlia
     }
 }
 
@@ -542,7 +546,7 @@ pub fn get_default_settings() -> AppSettings {
         commands_enabled: true,
         commands: Vec::new(),
         commands_llm_model_id: None,
-        commands_llm_provider: CommandsLlmProvider::Anthropic,
+        commands_llm_provider: CommandsLlmProvider::Parlia,
         anthropic_api_key: None,
         anthropic_model: default_anthropic_model(),
         openai_compat_base_url: None,

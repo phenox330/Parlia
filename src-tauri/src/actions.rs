@@ -105,6 +105,9 @@ async fn apply_voice_command(ah: &AppHandle, settings: &AppSettings, text: &str)
     let prompt = matched_cmd.prompt.clone();
 
     let llm_result: anyhow::Result<String> = match settings.commands_llm_provider {
+        CommandsLlmProvider::Parlia => {
+            crate::cloud_llm::generate_parlia_cloud(&prompt, &rest).await
+        }
         CommandsLlmProvider::Anthropic => {
             let key = match settings.anthropic_api_key.as_deref() {
                 Some(k) if !k.trim().is_empty() => k.to_string(),

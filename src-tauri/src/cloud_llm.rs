@@ -11,6 +11,14 @@ const MAX_TOKENS: u32 = 2048;
 /// outputs; a 60 s ceiling is defensive against hanging sockets.
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(60);
 
+/// Parlia Cloud proxy — relays to Groq with a shared Bearer token embedded
+/// in the binary. Extractable from a decompiled app; rotate aggressively and
+/// move to per-user auth before the user base gets large enough to attract
+/// abuse.
+const PARLIA_CLOUD_ENDPOINT: &str = "https://www.parlia.fr/api/v1/commands";
+const PARLIA_CLOUD_SHARED_TOKEN: &str =
+    "a260073dfcb446e088a8525a187654fb9d5002554c97d53571c7ff0085446ca9";
+
 #[derive(Serialize)]
 struct AnthropicMessage<'a> {
     role: &'a str,
@@ -122,6 +130,68 @@ pub async fn generate_anthropic(
     }
 
     Ok(text)
+}
+
+#[derive(Serialize)]
+struct ParliaCloudRequest<'a> {
+    system: &'a str,
+    user: &'a str,
+}
+
+#[derive(Deserialize)]
+struct ParliaCloudResponse {
+    text: String,
+}
+
+#[derive(Deserialize)]
+struct ParliaCloudError {
+    error: Option<String>,
+}
+
+/// Call the Parlia Cloud proxy. Fast path (<500 ms p50 via Groq) with zero
+/// user config — the shared token is embedded in the binary for tranche 1.
+pub async fn generate_parlia_cloud(system_prompt: &str, user_text: &str) -> Result<String> {
+    let client = reqwest::Client::builder()
+        .timeout(REQUEST_TIMEOUT)
+        .build()
+        .context("Failed to build HTTP client")?;
+
+    let resp = client
+        .post(PARLIA_CLOUD_ENDPOINT)
+        .header("content-type", "application/json")
+        .header(
+            "Authorization",
+            format!("Bearer {}", PARLIA_CLOUD_SHARED_TOKEN),
+        )
+        .json(&ParliaCloudRequest {
+            system: system_prompt,
+            user: user_text,
+        })
+        .send()
+        .await
+        .context("Failed to reach Parlia Cloud")?;
+
+    let status = resp.status();
+    if !status.is_success() {
+        let raw = resp
+            .text()
+            .await
+            .unwrap_or_else(|_| "<no body>".to_string());
+        let friendly = serde_json::from_str::<ParliaCloudError>(&raw)
+            .ok()
+            .and_then(|b| b.error)
+            .unwrap_or(raw);
+        return Err(anyhow!("Parlia Cloud error ({}): {}", status, friendly));
+    }
+
+    let parsed: ParliaCloudResponse = resp
+        .json()
+        .await
+        .context("Failed to parse Parlia Cloud response")?;
+    if parsed.text.trim().is_empty() {
+        return Err(anyhow!("Parlia Cloud returned an empty response"));
+    }
+    Ok(parsed.text)
 }
 
 #[derive(Serialize)]

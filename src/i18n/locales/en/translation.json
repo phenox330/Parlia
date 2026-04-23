@@ -340,9 +340,11 @@
       "provider": {
         "title": "AI Provider",
         "label": "Run commands with",
+        "parlia": "Parlia Cloud (recommended — free, no setup)",
         "anthropic": "Anthropic (Cloud — Claude Haiku)",
         "custom": "Custom (Ollama, Groq, OpenRouter…)",
         "local": "Local (on-device, experimental)",
+        "parliaDescription": "Uses Parlia's hosted proxy. Typically responds in under a second, no account or API key required. Great for getting started.",
         "anthropicDescription": "Uses Claude Haiku via the Anthropic API. Fast, great at French, ~$0.001 per command. Requires an API key.",
         "customDescription": "Any OpenAI-compatible endpoint — works with Ollama (local, free), LM Studio, Groq, OpenRouter, DeepSeek, vLLM…",
         "localDescription": "On-device inference via llama.cpp. Known to crash during model load on some macOS builds.",

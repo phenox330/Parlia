@@ -813,12 +813,16 @@ export type AudioDevice = { index: string; name: string; is_default: boolean }
 export type AutoSubmitKey = "enter" | "ctrl_enter" | "cmd_enter"
 export type BindingResponse = { success: boolean; binding: ShortcutBinding | null; error: string | null }
 export type ClipboardHandling = "dont_modify" | "copy_to_clipboard"
-export type CommandsLlmProvider = 
+export type CommandsLlmProvider =
+/**
+ * Parlia Cloud — hosted proxy that relays to Groq with a shared Bearer token.
+ */
+"parlia" |
 /**
  * On-device inference via llama.cpp. Known to crash during model load
  * on some macOS aarch64 builds; kept as an opt-in for future fixes.
  */
-"local" | 
+"local" |
 /**
  * Cloud inference via Anthropic's Messages API. Requires an API key.
  */

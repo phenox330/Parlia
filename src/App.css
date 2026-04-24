@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  --color-text: #0f0f0f;
-  --color-background: #fbfbfb;
+  --color-text: #fbfbfb;
+  --color-background: #080808;
   --color-background-ui: #116cf5;
   --color-logo-primary: #116cf5;
-  --color-logo-stroke: #0a4ab0;
+  --color-logo-stroke: #87b8fc;
   --color-text-stroke: #f6f6f6;
   --color-mid-gray: #363636;
   --color-sidebar-bg: #080808;
@@ -13,26 +13,19 @@
 }
 
 :root {
+  color-scheme: dark;
+
   /* Typography */
   font-size: 15px;
   line-height: 24px;
   font-weight: 400;
 
-  /* Colors - Light Theme */
-  /* --color-text: #0f0f0f;
-  --color-background: #fbfbfb;
-  --color-logo-primary: #a855f7;
-  --color-logo-stroke: #3b0764;
-  --color-text-stroke: #f6f6f6; */
-
-  /* Typography settings */
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 
-  /* Apply colors */
   color: var(--color-text);
   background-color: var(--color-background);
 }
@@ -44,18 +37,6 @@
   flex-direction: column;
   justify-content: center;
   text-align: center;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Colors - Dark Theme */
-    --color-text: #fbfbfb;
-    --color-background: #080808;
-    --color-logo-primary: #116cf5;
-    --color-logo-stroke: #87b8fc;
-    --color-sidebar-bg: #080808;
-    --color-border: #363636;
-  }
 }
 
 @layer utilities {

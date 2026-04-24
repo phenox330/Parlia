@@ -501,11 +501,10 @@ impl TranscriptionManager {
                             let params = WhisperInferenceParams {
                                 language: whisper_language.clone(),
                                 translate: settings.translate_to_english,
-                                initial_prompt: if whisper_language.as_deref() == Some("fr") {
-                                    Some("Transcription en français. Les mots anglais doivent être conservés tels quels en anglais.".to_string())
-                                } else {
-                                    None
-                                },
+                                initial_prompt: build_whisper_initial_prompt(
+                                    whisper_language.as_deref(),
+                                    &settings.custom_words,
+                                ),
                                 ..Default::default()
                             };
 
@@ -662,5 +661,81 @@ impl Drop for TranscriptionManager {
                 debug!("Idle watcher thread joined successfully");
             }
         }
+    }
+}
+
+/// Build the Whisper `initial_prompt` for a given language.
+///
+/// Whisper conditions its output on the prompt: punctuation, capitalization
+/// and grammar observed in the prompt are imitated in the transcription. We
+/// inject a short example with capitalized proper nouns and correct
+/// agreements, plus the user's custom vocabulary so rare names come out
+/// capitalized on the first pass instead of relying on the fuzzy post-match.
+///
+/// Cap: Whisper reads at most 224 tokens of prompt; staying under ~180 words
+/// leaves headroom for the vocabulary list.
+fn build_whisper_initial_prompt(language: Option<&str>, custom_words: &[String]) -> Option<String> {
+    let base = match language {
+        Some("fr") => Some(
+            "Transcription en français avec une ponctuation soignée et les noms propres capitalisés. \
+             Bonjour, je m'appelle Marie et j'habite à Lyon. Hier, la voiture était chargée de bagages. \
+             Paul est allé à Paris en TGV. La réunion s'est bien passée et les documents ont été envoyés. \
+             Elle est partie tôt ce matin. Les mots anglais restent en anglais.",
+        ),
+        Some("en") => Some(
+            "The following is a transcription in English with proper punctuation and correctly \
+             capitalized proper nouns. Hello, my name is Marie and I live in Lyon. Paul went to \
+             Paris last week. The meeting went well.",
+        ),
+        _ => None,
+    };
+
+    let vocab = if custom_words.is_empty() {
+        String::new()
+    } else {
+        let joined = custom_words.join(", ");
+        match language {
+            Some("fr") => format!(" Vocabulaire : {}.", joined),
+            Some("en") => format!(" Vocabulary: {}.", joined),
+            _ => format!(" {}.", joined),
+        }
+    };
+
+    match (base, vocab.is_empty()) {
+        (Some(b), true) => Some(b.to_string()),
+        (Some(b), false) => Some(format!("{}{}", b, vocab)),
+        (None, true) => None,
+        (None, false) => Some(vocab.trim_start().to_string()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn french_prompt_contains_examples_and_vocab() {
+        let p = build_whisper_initial_prompt(Some("fr"), &["Parlia".to_string(), "Lyon".to_string()])
+            .unwrap();
+        assert!(p.contains("Lyon"));
+        assert!(p.contains("chargée"));
+        assert!(p.contains("Vocabulaire : Parlia, Lyon."));
+    }
+
+    #[test]
+    fn english_prompt_used_for_en() {
+        let p = build_whisper_initial_prompt(Some("en"), &[]).unwrap();
+        assert!(p.starts_with("The following"));
+    }
+
+    #[test]
+    fn other_language_returns_vocab_only() {
+        let p = build_whisper_initial_prompt(Some("es"), &["Madrid".to_string()]).unwrap();
+        assert_eq!(p, "Madrid.");
+    }
+
+    #[test]
+    fn other_language_no_vocab_returns_none() {
+        assert!(build_whisper_initial_prompt(Some("es"), &[]).is_none());
     }
 }

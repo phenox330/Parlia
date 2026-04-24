@@ -100,7 +100,6 @@
       "granted": "Granted",
       "waiting": "Waiting...",
       "allGranted": "All set!",
-      "skip": "Skip",
       "errors": {
         "checkFailed": "Failed to check permissions. Please try again.",
         "requestFailed": "Failed to request permission. Please try again."

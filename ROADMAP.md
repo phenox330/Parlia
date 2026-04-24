@@ -1,6 +1,6 @@
 # Parlia — Roadmap
 
-Last updated: 2026-04-23 (v0.7.12 shipped — Phase 0 hygiene: token rotation + per-IP rate limit)
+Last updated: 2026-04-24 (v0.7.13 shipped — forced dark theme + cleaner onboarding + FR transcription quality)
 
 ## TL;DR
 
@@ -32,6 +32,62 @@ land in Tranche 2.
 - **Brand** — unified around blue (#116cf5), Parlia identity in place
 - **Legal** — MIT licence present in repo, not yet surfaced in the app
   (blocker for public distribution)
+
+---
+
+## What shipped on 2026-04-24 (v0.7.13)
+
+### UI — forced dark theme
+- The sidebar background was hardcoded to `#080808` in both the
+  default and `prefers-color-scheme: dark` blocks of `src/App.css`,
+  while the rest of the palette followed the system theme. On a Mac
+  in light mode the sidebar rendered black but the text inside
+  resolved to `--color-text: #0f0f0f` — black on black, invisible.
+- Promoted the dark palette into the `@theme` block as the single
+  default and removed the `prefers-color-scheme: dark` override.
+  Added `color-scheme: dark` on `:root` so native scrollbars and
+  form controls render dark too.
+- `Toaster theme="system"` → `"dark"` in `App.tsx` so toasts stay
+  consistent with the forced palette.
+- Net effect: the app looks identical regardless of the macOS
+  appearance setting. Revisit if we ever offer a real user-facing
+  theme toggle.
+
+### Onboarding — remove "Passer" escape hatch
+- Permissions screen had a "Passer" / "Skip" link below the two
+  permission cards that silently advanced past mandatory mic +
+  accessibility grants. Removed the button and the orphaned
+  `onboarding.permissions.skip` translation key (en + fr).
+- `onComplete` is still called automatically when both permissions
+  flip to `granted` (`AccessibilityOnboarding.tsx:93` and `:148`),
+  so the happy path is unchanged; only the manual skip is gone.
+
+### Transcription quality — FR capitalization + agreements
+- Whisper conditions its output on the `initial_prompt` (it imitates
+  the prompt's style for punctuation, capitalization, and grammar).
+  The previous FR prompt was a single sentence with no proper nouns
+  and no agreement examples, so outputs frequently came out as
+  `"la voiture est charger"` or `"la ville de lyon"`.
+- Enriched the FR prompt with explicit examples: capitalized proper
+  nouns (Marie, Lyon, Paul, Paris, TGV), feminine past-participle
+  agreement (`"la voiture était chargée"`), pronominal agreement
+  (`"Elle est partie"`). Added a comparable EN prompt for symmetry.
+- `settings.custom_words` (already exposed in Settings → Advanced,
+  previously used only for fuzzy post-match in `audio_toolkit/text.rs`)
+  is now also injected into the Whisper prompt as
+  `"Vocabulaire : Lyon, Parlia, …"`. Whisper produces the correct
+  casing on the first pass; the existing fuzzy match stays as a
+  safety net.
+- Extracted as a pure helper `build_whisper_initial_prompt()` in
+  `managers/transcription.rs` with 4 unit tests covering FR / EN /
+  fallback / empty-vocab cases.
+
+### Known follow-ups
+- If homophone / agreement errors persist on `whisper-medium-q4_1`,
+  the next lever is either switching the default download to
+  `ggml-large-v3-turbo` (already in the catalog) or wiring an
+  auto-cleanup LLM pass via Parlia Cloud on every transcription.
+  Both deferred until we see dogfooding data.
 
 ---
 

@@ -94,6 +94,23 @@ export const CommandsSettings: React.FC = () => {
     void refreshCommands();
   };
 
+  // API keys bypass the generic settings store entirely — the value never
+  // touches AppSettings on disk, so we call the dedicated IPC commands
+  // directly instead of going through `updateSetting`.
+  const writeAnthropicKey = async (value: string | null): Promise<boolean> => {
+    try {
+      const result = await commands.changeAnthropicApiKeySetting(value);
+      if (result.status === "error") {
+        toast.error(t("settings.commands.provider.keychainWriteFailed"));
+        return false;
+      }
+      return true;
+    } catch {
+      toast.error(t("settings.commands.provider.keychainWriteFailed"));
+      return false;
+    }
+  };
+
   const persistKey = async () => {
     const trimmed = keyDraft.trim();
     if (trimmed === "") {
@@ -101,14 +118,14 @@ export const CommandsSettings: React.FC = () => {
       setEditingAnthropic(false);
       return;
     }
-    await updateSetting("anthropic_api_key", trimmed);
+    if (!(await writeAnthropicKey(trimmed))) return;
     setKeyDraft("");
     setEditingAnthropic(false);
     await refreshSecretStatus();
   };
 
   const removeAnthropicKey = async () => {
-    await updateSetting("anthropic_api_key", null);
+    if (!(await writeAnthropicKey(null))) return;
     setKeyDraft("");
     setEditingAnthropic(false);
     await refreshSecretStatus();
@@ -123,20 +140,36 @@ export const CommandsSettings: React.FC = () => {
     );
   };
 
+  const writeOpenAiCompatKey = async (
+    value: string | null,
+  ): Promise<boolean> => {
+    try {
+      const result = await commands.changeOpenaiCompatApiKeySetting(value);
+      if (result.status === "error") {
+        toast.error(t("settings.commands.provider.keychainWriteFailed"));
+        return false;
+      }
+      return true;
+    } catch {
+      toast.error(t("settings.commands.provider.keychainWriteFailed"));
+      return false;
+    }
+  };
+
   const persistCustomKey = async () => {
     const trimmed = customKeyDraft.trim();
     if (trimmed === "") {
       setEditingOpenAiCompat(false);
       return;
     }
-    await updateSetting("openai_compat_api_key", trimmed);
+    if (!(await writeOpenAiCompatKey(trimmed))) return;
     setCustomKeyDraft("");
     setEditingOpenAiCompat(false);
     await refreshSecretStatus();
   };
 
   const removeOpenAiCompatKey = async () => {
-    await updateSetting("openai_compat_api_key", null);
+    if (!(await writeOpenAiCompatKey(null))) return;
     setCustomKeyDraft("");
     setEditingOpenAiCompat(false);
     await refreshSecretStatus();
@@ -156,7 +189,7 @@ export const CommandsSettings: React.FC = () => {
     setCustomKeyDraft("");
     void updateSetting("openai_compat_base_url", url);
     void updateSetting("openai_compat_model", model);
-    await updateSetting("openai_compat_api_key", null);
+    await writeOpenAiCompatKey(null);
     setEditingOpenAiCompat(false);
     await refreshSecretStatus();
   };

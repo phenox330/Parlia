@@ -353,6 +353,7 @@
         "replace": "Remplacer",
         "remove": "Supprimer",
         "keychainReadFailed": "Lecture du trousseau impossible. Autorisez l'accès dans Préférences Système → Confidentialité si vous l'avez refusé.",
+        "keychainWriteFailed": "Impossible d'enregistrer la clé dans le trousseau. Réessayez, ou autorisez l'accès dans Préférences Système → Confidentialité.",
         "getKey": "Obtenir une clé",
         "showKey": "Afficher la clé",
         "hideKey": "Masquer la clé",

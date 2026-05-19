@@ -353,6 +353,7 @@
         "replace": "Replace",
         "remove": "Remove",
         "keychainReadFailed": "Couldn't read the keychain. Grant access in System Settings → Privacy & Security if you denied it.",
+        "keychainWriteFailed": "Couldn't save the key to the keychain. Try again, or grant access in System Settings → Privacy & Security.",
         "getKey": "Get a key",
         "showKey": "Show API key",
         "hideKey": "Hide API key",

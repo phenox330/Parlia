@@ -117,14 +117,13 @@ const settingUpdaters: {
     commands.changeCommandsEnabledSetting(value as boolean),
   commands_llm_provider: (value) =>
     commands.changeCommandsLlmProviderSetting(value as any),
-  anthropic_api_key: (value) =>
-    commands.changeAnthropicApiKeySetting(value as string | null),
+  // anthropic_api_key + openai_compat_api_key are intentionally absent —
+  // they no longer live on AppSettings (Keychain-backed). Call the
+  // dedicated IPC commands directly from the UI; see CommandsSettings.tsx.
   anthropic_model: (value) =>
     commands.changeAnthropicModelSetting(value as string),
   openai_compat_base_url: (value) =>
     commands.changeOpenaiCompatBaseUrlSetting(value as string | null),
-  openai_compat_api_key: (value) =>
-    commands.changeOpenaiCompatApiKeySetting(value as string | null),
   openai_compat_model: (value) =>
     commands.changeOpenaiCompatModelSetting(value as string | null),
 };

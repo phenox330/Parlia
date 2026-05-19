@@ -790,23 +790,20 @@ async isLaptop() : Promise<Result<boolean, string>> {
 
 /** user-defined types **/
 
-export type AppSettings = { bindings: Partial<{ [key in string]: ShortcutBinding }>; push_to_talk: boolean; audio_feedback: boolean; audio_feedback_volume?: number; sound_theme?: SoundTheme; start_hidden?: boolean; autostart_enabled?: boolean; update_checks_enabled?: boolean; selected_model?: string; always_on_microphone?: boolean; selected_microphone?: string | null; clamshell_microphone?: string | null; selected_output_device?: string | null; translate_to_english?: boolean; selected_language?: string; overlay_position?: OverlayPosition; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; experimental_enabled?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; typing_tool?: TypingTool; external_script_path: string | null; commands_enabled?: boolean; commands?: VoiceCommand[]; commands_llm_model_id?: string | null; commands_llm_provider?: CommandsLlmProvider; 
 /**
- * Anthropic API key — stored plaintext in the settings store.
- * Ship a keychain-backed secret store before distributing widely.
+ * `Debug` is hand-rolled below so that `anthropic_api_key` and
+ * `openai_compat_api_key` are redacted from any `{:?}` formatting — the
+ * settings struct is `debug!`-logged on every load, and bug reports
+ * routinely include log files. Drop this impl only once the keys are
+ * out of the struct entirely (Keychain migration).
  */
-anthropic_api_key?: string | null; anthropic_model?: string; 
+export type AppSettings = { bindings: Partial<{ [key in string]: ShortcutBinding }>; push_to_talk: boolean; audio_feedback: boolean; audio_feedback_volume?: number; sound_theme?: SoundTheme; start_hidden?: boolean; autostart_enabled?: boolean; update_checks_enabled?: boolean; selected_model?: string; always_on_microphone?: boolean; selected_microphone?: string | null; clamshell_microphone?: string | null; selected_output_device?: string | null; translate_to_english?: boolean; selected_language?: string; overlay_position?: OverlayPosition; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; experimental_enabled?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; typing_tool?: TypingTool; external_script_path: string | null; commands_enabled?: boolean; commands?: VoiceCommand[]; commands_llm_model_id?: string | null; commands_llm_provider?: CommandsLlmProvider; anthropic_model?: string; 
 /**
  * Base URL for the OpenAI-compatible provider, without trailing slash.
  * Examples: `http://localhost:11434/v1` (Ollama),
  * `https://api.groq.com/openai/v1`, `https://openrouter.ai/api/v1`.
  */
 openai_compat_base_url?: string | null; 
-/**
- * Optional bearer token sent as `Authorization: Bearer <key>`. Blank is
- * valid — Ollama and LM Studio don't require auth by default.
- */
-openai_compat_api_key?: string | null; 
 /**
  * Model id as understood by the provider (e.g. `qwen2.5:1.5b`,
  * `llama-3.1-8b-instant`, `openai/gpt-4o-mini`).
@@ -874,6 +871,11 @@ export type ModelUnloadTimeout = "never" | "immediately" | "min_2" | "min_5" | "
 export type OverlayPosition = "none" | "top" | "bottom"
 export type PasteMethod = "ctrl_v" | "direct" | "none" | "shift_insert" | "ctrl_shift_v" | "external_script"
 export type RecordingRetentionPeriod = "never" | "preserve_limit" | "days_3" | "weeks_2" | "months_3"
+/**
+ * "Is this secret stored?" view returned to the UI. Mirrors the shape of
+ * `crate::secrets::SecretName` so the frontend can render a "Configured ✓"
+ * state without ever receiving the key value.
+ */
 export type SecretStatus = { anthropic_set: boolean; openai_compat_set: boolean }
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }
 export type SoundTheme = "marimba" | "pop" | "custom"

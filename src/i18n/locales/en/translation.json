@@ -100,8 +100,8 @@
       "granted": "Granted",
       "waiting": "Waiting...",
       "allGranted": "All set!",
-      "restartHint": "macOS sometimes only detects a fresh permission after Parlia restarts. If you've already enabled it in System Settings, restart now.",
-      "restartButton": "Restart Parlia",
+      "restartHint": "macOS sometimes only detects a fresh permission after Parlia restarts. If you've already enabled it in System Settings, quit Parlia and reopen it.",
+      "restartButton": "Quit Parlia",
       "errors": {
         "checkFailed": "Failed to check permissions. Please try again.",
         "requestFailed": "Failed to request permission. Please try again.",

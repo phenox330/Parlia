@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { platform } from "@tauri-apps/plugin-os";
-import { relaunch } from "@tauri-apps/plugin-process";
+import { exit } from "@tauri-apps/plugin-process";
 import {
   checkAccessibilityPermission,
   requestAccessibilityPermission,
@@ -206,11 +206,16 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
   }, []);
 
   const handleRestart = async () => {
+    // Quit only. `relaunch()` doesn't survive `bun run tauri dev` (the
+    // cargo wrapper exits with the child and never respawns), leaving the
+    // user with a dead webview. `exit(0)` is symmetric across dev and
+    // production: the user reopens via the Dock (.app) or re-runs the
+    // dev command. The copy in `restartHint` tells them so.
     setIsRestarting(true);
     try {
-      await relaunch();
+      await exit(0);
     } catch (error) {
-      console.error("Failed to relaunch Parlia:", error);
+      console.error("Failed to quit Parlia:", error);
       toast.error(t("onboarding.permissions.errors.restartFailed"));
       setIsRestarting(false);
     }

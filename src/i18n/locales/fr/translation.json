@@ -100,8 +100,8 @@
       "granted": "Accordé",
       "waiting": "En attente...",
       "allGranted": "Tout est prêt !",
-      "restartHint": "macOS détecte parfois une autorisation nouvellement accordée seulement après un redémarrage de Parlia. Si vous l'avez déjà activée dans Préférences Système, redémarrez maintenant.",
-      "restartButton": "Redémarrer Parlia",
+      "restartHint": "macOS détecte parfois une autorisation nouvellement accordée seulement après un redémarrage de Parlia. Si vous l'avez déjà activée dans Préférences Système, quittez Parlia puis rouvrez-le.",
+      "restartButton": "Quitter Parlia",
       "errors": {
         "checkFailed": "Échec de la vérification des autorisations. Veuillez réessayer.",
         "requestFailed": "Échec de la demande d'autorisation. Veuillez réessayer.",

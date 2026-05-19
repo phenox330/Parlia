@@ -14,7 +14,10 @@
     "commands": "Commandes",
     "history": "Historique",
     "debug": "Débogage",
-    "about": "À propos"
+    "about": "À propos",
+    "aria": {
+      "label": "Sections des paramètres"
+    }
   },
   "onboarding": {
     "subtitle": "Pour commencer, choisissez un modèle de transcription",

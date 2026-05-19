@@ -105,7 +105,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <ParliaMark width={36} height={36} className="text-logo-primary" />
         <ParliaTextLogo width={96} className="text-text -ml-1" />
       </div>
-      <div className="flex flex-col w-full items-center gap-1 pt-2 border-t border-border">
+      <nav
+        aria-label={t("sidebar.aria.label")}
+        className="flex flex-col w-full items-center gap-1 pt-2 border-t border-border"
+      >
         {availableSections.map((section) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
@@ -116,28 +119,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
           const iconSize = section.id === "general" ? 24 : 16;
 
           return (
-            <div
+            <button
               key={section.id}
-              className={`flex gap-2 items-center p-2 w-full rounded-lg cursor-pointer transition-colors ${
+              type="button"
+              aria-current={isActive ? "page" : undefined}
+              onClick={() => onSectionChange(section.id)}
+              className={`flex gap-2 items-center p-2 w-full rounded-lg cursor-pointer transition-colors text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-logo-primary ${
                 isActive
                   ? "bg-logo-primary/80"
                   : "hover:bg-mid-gray/20 hover:opacity-100 opacity-85"
               }`}
-              onClick={() => onSectionChange(section.id)}
             >
               <span className="inline-flex items-center justify-center shrink-0 w-6 h-6">
                 <Icon width={iconSize} height={iconSize} />
               </span>
-              <p
-                className="text-sm font-medium truncate"
-                title={t(section.labelKey)}
-              >
+              <span className="text-sm font-medium truncate">
                 {t(section.labelKey)}
-              </p>
-            </div>
+              </span>
+            </button>
           );
         })}
-      </div>
+      </nav>
     </div>
   );
 };

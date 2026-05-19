@@ -1,4 +1,4 @@
-import { listen } from "@tauri-apps/api/event";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -22,44 +22,54 @@ const RecordingOverlay: React.FC = () => {
   const direction = getLanguageDirection(i18n.language);
 
   useEffect(() => {
-    const setupEventListeners = async () => {
-      // Listen for show-overlay event from Rust
-      const unlistenShow = await listen("show-overlay", async (event) => {
-        // Sync language from settings each time overlay is shown
-        await syncLanguageFromSettings();
-        const overlayState = event.payload as OverlayState;
-        setState(overlayState);
-        setIsVisible(true);
-      });
+    // `listen()` is async, so we register the unlistens into an array the
+    // cleanup function captures. The `cancelled` flag handles the race
+    // where the effect tears down before setup completes — in that case
+    // the handlers that eventually resolve are unlistened immediately
+    // instead of leaking. Under React StrictMode this matters: the effect
+    // mounts → unmounts → remounts in dev, and without this guard each
+    // cycle leaks a Tauri listener pair (visible as bar-flicker because
+    // every mic-level event fires every registered handler).
+    const unlistens: UnlistenFn[] = [];
+    let cancelled = false;
 
-      // Listen for hide-overlay event from Rust
-      const unlistenHide = await listen("hide-overlay", () => {
-        setIsVisible(false);
-      });
+    (async () => {
+      const handlers = await Promise.all([
+        listen("show-overlay", async (event) => {
+          // Sync language from settings each time overlay is shown
+          await syncLanguageFromSettings();
+          const overlayState = event.payload as OverlayState;
+          setState(overlayState);
+          setIsVisible(true);
+        }),
+        listen("hide-overlay", () => {
+          setIsVisible(false);
+        }),
+        listen<number[]>("mic-level", (event) => {
+          const newLevels = event.payload as number[];
 
-      // Listen for mic-level updates
-      const unlistenLevel = await listen<number[]>("mic-level", (event) => {
-        const newLevels = event.payload as number[];
+          // Apply smoothing to reduce jitter
+          const smoothed = smoothedLevelsRef.current.map((prev, i) => {
+            const target = newLevels[i] || 0;
+            return prev * 0.7 + target * 0.3; // Smooth transition
+          });
 
-        // Apply smoothing to reduce jitter
-        const smoothed = smoothedLevelsRef.current.map((prev, i) => {
-          const target = newLevels[i] || 0;
-          return prev * 0.7 + target * 0.3; // Smooth transition
-        });
+          smoothedLevelsRef.current = smoothed;
+          setLevels(smoothed.slice(0, 9));
+        }),
+      ]);
 
-        smoothedLevelsRef.current = smoothed;
-        setLevels(smoothed.slice(0, 9));
-      });
+      if (cancelled) {
+        handlers.forEach((fn) => fn());
+      } else {
+        unlistens.push(...handlers);
+      }
+    })();
 
-      // Cleanup function
-      return () => {
-        unlistenShow();
-        unlistenHide();
-        unlistenLevel();
-      };
+    return () => {
+      cancelled = true;
+      unlistens.forEach((fn) => fn());
     };
-
-    setupEventListeners();
   }, []);
 
   const getIcon = () => {

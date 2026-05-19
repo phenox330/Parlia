@@ -1,8 +1,8 @@
 # Parlia
 
-**A free, open source, and extensible speech-to-text application that works completely offline.**
+**A free, open source, extensible speech-to-text app. Your audio is transcribed on-device — it never leaves your Mac.**
 
-Parlia is a cross-platform desktop application that provides simple, privacy-focused speech transcription. Press a shortcut, speak, and have your words appear in any text field. This happens on your own computer without sending any information to the cloud.
+Parlia is a cross-platform desktop application for fast, local speech-to-text. Press a shortcut, speak, and have your words appear in any text field. The audio is transcribed on your own computer using Whisper or Parakeet. Optional AI voice commands send only the transcribed *text* (no audio) to the LLM provider you choose — including fully local options.
 
 ## Why Parlia?
 
@@ -10,7 +10,7 @@ Parlia was created to fill the gap for a truly open source, extensible speech-to
 
 - **Free**: Accessibility tooling belongs in everyone's hands, not behind a paywall
 - **Open Source**: Together we can build further. Extend Parlia for yourself and contribute to something bigger
-- **Private**: Your voice stays on your computer. Get transcriptions without sending audio to the cloud
+- **Private by default**: Audio is transcribed locally and never uploaded. Optional AI voice commands send only the transcribed text to the provider *you* pick — Parlia Cloud (free hosted beta), your own Anthropic key, an OpenAI-compatible endpoint (Ollama / Groq / OpenRouter), or a fully local model
 - **Simple**: One tool, one job. Transcribe what you say and put it into a text box
 
 Parlia isn't trying to be the best speech-to-text app—it's trying to be the most forkable one.
@@ -19,16 +19,34 @@ Parlia isn't trying to be the best speech-to-text app—it's trying to be the mo
 
 1. **Press** a configurable keyboard shortcut to start/stop recording (or use push-to-talk mode)
 2. **Speak** your words while the shortcut is active
-3. **Release** and Parlia processes your speech using Whisper
+3. **Release** and Parlia processes your speech using Whisper or Parakeet
 4. **Get** your transcribed text pasted directly into whatever app you're using
 
-The process is entirely local:
+Transcription runs entirely on-device:
 
 - Silence is filtered using VAD (Voice Activity Detection) with Silero
 - Transcription uses your choice of models:
   - **Whisper models** (Small/Medium/Turbo/Large) with GPU acceleration when available
   - **Parakeet V3** - CPU-optimized model with excellent performance and automatic language detection
 - Works on Windows, macOS, and Linux
+
+## Privacy & Data
+
+We don't ask you to trust us — here's exactly what touches the network and when.
+
+| What | Where it runs | What leaves your computer |
+|---|---|---|
+| **Microphone audio** | On-device (Silero VAD + Whisper / Parakeet) | **Nothing.** Audio is never uploaded. |
+| **Transcribed text** | On-device | **Nothing**, unless you use voice commands (below). |
+| **Voice commands → Parlia Cloud** (default, optional) | Vercel Edge → Groq (US) | The transcribed text. No audio, no logs of content beyond Groq's standard inference logs. Rate-limited; switchable. |
+| **Voice commands → Anthropic** (your API key) | api.anthropic.com | The transcribed text, under your Anthropic account. |
+| **Voice commands → Custom / Ollama** | The endpoint you configure | The transcribed text. With Ollama running on `localhost`, nothing leaves your machine. |
+| **Voice commands → Local llama.cpp** | On-device | **Nothing.** Fully offline. |
+| **Model downloads** | `blob.handy.computer` and `huggingface.co` | One-time, when you download a transcription model or local LLM. |
+| **Update checks** | None right now (manual download) | — |
+| **Telemetry / analytics** | None | — |
+
+If you want a "no network at all" experience, switch the provider in Settings → Commands to **Local** (or skip voice commands entirely — the transcription core works without them).
 
 ## Quick Start
 

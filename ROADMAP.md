@@ -326,10 +326,10 @@ per-user quotas. Detailed plan in chat; summary here:
 
 ### Operational chores
 
-- **Revoke the old Apple Developer app-specific password**
-  `fmhn-bokc-cvvd-gpll` on https://account.apple.com — it was
-  shared multiple times in chat. Generate a fresh one for the
-  next release.
+- **Rotate the Apple Developer app-specific password** used for
+  notarization on https://account.apple.com before the next
+  release. Keep the new value out of the repo (local `.env` or
+  password manager only — never commit it).
 - **Landing page polish**: 15-30 s demo GIF ("Email …" flow),
   visible value prop above the fold, MIT footer.
 - **Vercel domain consistency**: `parlia.fr` → 307 → `www.parlia.fr`.

@@ -7,6 +7,7 @@ pub mod audio_toolkit;
 pub mod cli;
 mod clipboard;
 mod commands;
+mod download_safety;
 mod helpers;
 mod input;
 mod managers;

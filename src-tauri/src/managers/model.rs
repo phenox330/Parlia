@@ -1,9 +1,14 @@
+use crate::download_safety::{
+    hex, reject_symlink, size_cap_bytes, validate_download_url, validate_filename,
+    validate_tar_entry_path,
+};
 use crate::settings::{get_settings, write_settings};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use flate2::read::GzDecoder;
 use futures_util::StreamExt;
 use log::{debug, info, warn};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use specta::Type;
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -15,6 +20,28 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tar::Archive;
 use tauri::{AppHandle, Emitter, Manager};
+
+/// Whisper / Parakeet hosts. Narrow on purpose — see also
+/// `crate::managers::llm::LLM_DOWNLOAD_HOST_ALLOWLIST`.
+const MODEL_DOWNLOAD_HOST_ALLOWLIST: &[&str] = &["blob.handy.computer"];
+
+/// reqwest redirect policy that re-validates every hop against the model
+/// host allowlist (a redirect to `evil.com` from an allowlisted host must
+/// fail just like a direct URL with that host).
+fn build_model_download_client() -> Result<reqwest::Client> {
+    reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::custom(|attempt| {
+            if attempt.previous().len() >= 8 {
+                return attempt.error("too many redirects");
+            }
+            match validate_download_url(attempt.url(), MODEL_DOWNLOAD_HOST_ALLOWLIST) {
+                Ok(()) => attempt.follow(),
+                Err(e) => attempt.error(e),
+            }
+        }))
+        .build()
+        .map_err(|e| anyhow!("Failed to build model download client: {}", e))
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub enum EngineType {
@@ -45,6 +72,14 @@ pub struct ModelInfo {
     pub is_recommended: bool,       // Whether this is the recommended model for new users
     pub supported_languages: Vec<String>, // Languages this model can transcribe
     pub is_custom: bool,            // Whether this is a user-provided custom model
+    /// Pinned SHA-256 of the downloaded artifact (the `.bin` blob for
+    /// Whisper-style models, the `.tar.gz` archive for directory models).
+    /// `None` falls back to allowlist + size cap + symlink reject + tar
+    /// path validation only — still way better than the pre-v0.7.14
+    /// posture, but a CDN compromise would still pass. Fill in for every
+    /// catalog entry once the values have been verified out-of-band.
+    #[serde(default)]
+    pub sha256: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
@@ -115,6 +150,8 @@ impl ModelManager {
                 is_recommended: true,
                 supported_languages: whisper_languages.clone(),
                 is_custom: false,
+                // TODO(parlia): pin once verified out-of-band. See ROADMAP.
+                sha256: None,
             },
         );
 
@@ -139,6 +176,8 @@ impl ModelManager {
                 is_recommended: false,
                 supported_languages: whisper_languages.clone(),
                 is_custom: false,
+                // TODO(parlia): pin once verified out-of-band. See ROADMAP.
+                sha256: None,
             },
         );
 
@@ -162,6 +201,8 @@ impl ModelManager {
                 is_recommended: false,
                 supported_languages: whisper_languages.clone(),
                 is_custom: false,
+                // TODO(parlia): pin once verified out-of-band. See ROADMAP.
+                sha256: None,
             },
         );
 
@@ -185,6 +226,8 @@ impl ModelManager {
                 is_recommended: false,
                 supported_languages: whisper_languages.clone(),
                 is_custom: false,
+                // TODO(parlia): pin once verified out-of-band. See ROADMAP.
+                sha256: None,
             },
         );
 
@@ -217,6 +260,8 @@ impl ModelManager {
                 is_recommended: false,
                 supported_languages: parakeet_v3_languages,
                 is_custom: false,
+                // TODO(parlia): pin once verified out-of-band. See ROADMAP.
+                sha256: None,
             },
         );
 
@@ -488,6 +533,9 @@ impl ModelManager {
                     is_recommended: false,
                     supported_languages: vec![],
                     is_custom: true,
+                    // Custom user models never get a pinned hash — the
+                    // .bin is already on disk so there's nothing to verify.
+                    sha256: None,
                 },
             );
         }
@@ -506,11 +554,23 @@ impl ModelManager {
 
         let url = model_info
             .url
+            .clone()
             .ok_or_else(|| anyhow::anyhow!("No download URL for model"))?;
+
+        // Defence-in-depth: filename can never escape models_dir, URL must
+        // be https + on the model allowlist (re-validated on every redirect
+        // hop by the custom reqwest redirect policy).
+        validate_filename(&model_info.filename)?;
+        let parsed_url = reqwest::Url::parse(&url)
+            .map_err(|e| anyhow!("Invalid model URL {}: {}", url, e))?;
+        validate_download_url(&parsed_url, MODEL_DOWNLOAD_HOST_ALLOWLIST)?;
+
         let model_path = self.models_dir.join(&model_info.filename);
         let partial_path = self
             .models_dir
             .join(format!("{}.partial", &model_info.filename));
+        let size_cap = size_cap_bytes(model_info.size_mb);
+        let expected_sha = model_info.sha256.as_deref().map(|s| s.to_ascii_lowercase());
 
         // Don't download if complete version already exists
         if model_path.exists() {
@@ -520,6 +580,18 @@ impl ModelManager {
             }
             self.update_download_status()?;
             return Ok(());
+        }
+
+        // Refuse resume when a SHA-256 is pinned — the existing .partial
+        // bytes weren't hashed by us, so the final digest couldn't be
+        // trusted. Drop the partial and start fresh. Costs bandwidth on
+        // a previously-cancelled download, buys real integrity.
+        if expected_sha.is_some() && partial_path.exists() {
+            info!(
+                "Discarding partial for {} — SHA is pinned and a resumed stream couldn't verify",
+                model_id
+            );
+            let _ = fs::remove_file(&partial_path);
         }
 
         // Check if we have a partial download to resume
@@ -547,8 +619,9 @@ impl ModelManager {
             flags.insert(model_id.to_string(), cancel_flag.clone());
         }
 
-        // Create HTTP client with range request for resuming
-        let client = reqwest::Client::new();
+        // HTTP client with redirect re-validation so a future redirect to
+        // a non-allowlisted host fails fast instead of leaking the request.
+        let client = build_model_download_client()?;
         let mut request = client.get(&url);
 
         if resume_from > 0 {
@@ -602,6 +675,10 @@ impl ModelManager {
         let mut downloaded = resume_from;
         let mut stream = response.bytes_stream();
 
+        // Refuse to write through a symlink — an attacker with write
+        // access to models_dir would otherwise redirect us at e.g.
+        // ~/.ssh/authorized_keys.
+        reject_symlink(&partial_path)?;
         // Open file for appending if resuming, or create new if starting fresh
         let mut file = if resume_from > 0 {
             std::fs::OpenOptions::new()
@@ -611,6 +688,11 @@ impl ModelManager {
         } else {
             std::fs::File::create(&partial_path)?
         };
+
+        // SHA-256 of the bytes we wrote ourselves. Resume already drops
+        // the partial when SHA is pinned, so the hasher always sees the
+        // full content when verification is required.
+        let mut hasher = Sha256::new();
 
         // Emit initial progress
         let initial_progress = DownloadProgress {
@@ -668,8 +750,29 @@ impl ModelManager {
                 e
             })?;
 
+            // Reject *before* writing so an overshoot never hits disk.
+            // Cap = 2× declared size + 100 MB pad (see size_cap_bytes).
+            let after = downloaded.saturating_add(chunk.len() as u64);
+            if after > size_cap {
+                drop(file);
+                let _ = fs::remove_file(&partial_path);
+                {
+                    let mut models = self.available_models.lock().unwrap();
+                    if let Some(model) = models.get_mut(model_id) {
+                        model.is_downloading = false;
+                    }
+                }
+                return Err(anyhow!(
+                    "Model {} exceeded size cap ({} > {} bytes)",
+                    model_id,
+                    after,
+                    size_cap
+                ));
+            }
+
             file.write_all(&chunk)?;
-            downloaded += chunk.len() as u64;
+            hasher.update(&chunk);
+            downloaded = after;
 
             let percentage = if total_size > 0 {
                 (downloaded as f64 / total_size as f64) * 100.0
@@ -728,6 +831,38 @@ impl ModelManager {
             }
         }
 
+        // Verify SHA-256 against the pinned catalog entry, if any. Resume
+        // already dropped the partial when SHA is pinned (see above), so
+        // the hasher saw every byte. None = gradual rollout — log a clear
+        // warning so missing pins are visible in support logs.
+        if let Some(expected) = expected_sha.as_deref() {
+            let digest = hex(hasher.finalize().as_slice());
+            if !digest.eq_ignore_ascii_case(expected) {
+                let _ = fs::remove_file(&partial_path);
+                {
+                    let mut models = self.available_models.lock().unwrap();
+                    if let Some(model) = models.get_mut(model_id) {
+                        model.is_downloading = false;
+                    }
+                }
+                return Err(anyhow!(
+                    "Integrity check failed for {}: expected {}, got {}",
+                    model_id,
+                    expected,
+                    digest
+                ));
+            }
+            info!("Integrity verified for {}: {}", model_id, digest);
+        } else {
+            warn!(
+                "Model {} has no pinned SHA-256 — relying on allowlist + size cap only. Track via ROADMAP.",
+                model_id
+            );
+            // hasher dropped — explicitly so reading hasher.finalize() is
+            // gated on the `Some(expected)` branch above and we don't have
+            // a dangling consumed value.
+        }
+
         // Handle directory-based models (extract tar.gz) vs file-based models
         if model_info.is_directory {
             // Track that this model is being extracted
@@ -759,12 +894,25 @@ impl ModelManager {
             let tar = GzDecoder::new(tar_gz);
             let mut archive = Archive::new(tar);
 
-            // Extract to the temporary directory first
-            archive.unpack(&temp_extract_dir).map_err(|e| {
+            // Manual extraction loop: validate every entry's path BEFORE
+            // unpacking so a malicious archive can't write outside
+            // temp_extract_dir via `../` segments or absolute paths.
+            // `tar::Archive::unpack` already filters some cases but
+            // silently skips bad entries; explicit validation gives us
+            // a proper error and audit trail.
+            let extraction_result: Result<()> = (|| {
+                for entry in archive.entries()? {
+                    let mut entry = entry?;
+                    let entry_path = entry.path()?.into_owned();
+                    validate_tar_entry_path(&entry_path)?;
+                    entry.unpack_in(&temp_extract_dir)?;
+                }
+                Ok(())
+            })();
+
+            if let Err(e) = extraction_result {
                 let error_msg = format!("Failed to extract archive: {}", e);
-                // Clean up failed extraction
                 let _ = fs::remove_dir_all(&temp_extract_dir);
-                // Remove from extracting set
                 {
                     let mut extracting = self.extracting_models.lock().unwrap();
                     extracting.remove(model_id);
@@ -776,8 +924,8 @@ impl ModelManager {
                         "error": error_msg
                     }),
                 );
-                anyhow::anyhow!(error_msg)
-            })?;
+                return Err(anyhow::anyhow!(error_msg));
+            }
 
             // Find the actual extracted directory (archive might have a nested structure)
             let extracted_dirs: Vec<_> = fs::read_dir(&temp_extract_dir)?
@@ -815,6 +963,7 @@ impl ModelManager {
             let _ = fs::remove_file(&partial_path);
         } else {
             // Move partial file to final location for file-based models
+            reject_symlink(&model_path)?;
             fs::rename(&partial_path, &model_path)?;
         }
 
@@ -1039,6 +1188,8 @@ mod tests {
                 is_recommended: false,
                 supported_languages: vec!["en".to_string()],
                 is_custom: false,
+                // TODO(parlia): pin once verified out-of-band. See ROADMAP.
+                sha256: None,
             },
         );
 

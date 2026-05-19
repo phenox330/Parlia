@@ -1,3 +1,6 @@
+use crate::download_safety::{
+    reject_symlink, validate_download_url, validate_filename, ABSOLUTE_SIZE_CEILING_BYTES,
+};
 use anyhow::{anyhow, Context, Result};
 use futures_util::StreamExt;
 use llama_cpp_2::context::params::LlamaContextParams;
@@ -1071,12 +1074,7 @@ fn scrub_url(url: &reqwest::Url) -> String {
 }
 
 fn hex(bytes: &[u8]) -> String {
-    let mut s = String::with_capacity(bytes.len() * 2);
-    for b in bytes {
-        use std::fmt::Write;
-        let _ = write!(s, "{:02x}", b);
-    }
-    s
+    crate::download_safety::hex(bytes)
 }
 
 /// Per-download invariants computed once up front (SHA pin, size cap,
@@ -1124,7 +1122,7 @@ impl DownloadContext {
 
         let parsed_url = reqwest::Url::parse(url)
             .map_err(|e| anyhow!("Invalid LLM download URL {}: {}", url, e))?;
-        validate_download_url(&parsed_url)?;
+        validate_download_url(&parsed_url, LLM_DOWNLOAD_HOST_ALLOWLIST)?;
 
         Ok(Self {
             expected_sha,
@@ -1152,7 +1150,7 @@ fn build_download_client() -> Result<reqwest::Client> {
             if attempt.previous().len() >= 8 {
                 return attempt.error("too many redirects");
             }
-            match validate_download_url(attempt.url()) {
+            match validate_download_url(attempt.url(), LLM_DOWNLOAD_HOST_ALLOWLIST) {
                 Ok(()) => attempt.follow(),
                 Err(e) => attempt.error(e),
             }
@@ -1217,11 +1215,10 @@ async fn open_download_stream(
     Ok((total_size, response.bytes_stream()))
 }
 
-/// Allowlist of download hosts. Keep it narrow — any compromise of these
-/// CDNs is already a hash-verification problem, but we at least stop the
-/// app from contacting arbitrary hosts (SSRF / pivot) via a future user-
-/// editable catalog.
-const DOWNLOAD_HOST_ALLOWLIST: &[&str] = &[
+/// LLM-specific download hosts. The shared model downloader (Whisper /
+/// Parakeet via `blob.handy.computer`) has its own narrower allowlist —
+/// least privilege: neither downloader can fetch from the other's hosts.
+const LLM_DOWNLOAD_HOST_ALLOWLIST: &[&str] = &[
     "huggingface.co",
     "cdn-lfs.huggingface.co",
     "cdn-lfs.hf.co",
@@ -1229,68 +1226,3 @@ const DOWNLOAD_HOST_ALLOWLIST: &[&str] = &[
     // community repos redirect LFS downloads here instead of cdn-lfs.
     "xethub.hf.co",
 ];
-
-/// Hard ceiling applied on top of the per-model `size_mb` cap. Protects against
-/// a malformed catalog entry with size_mb = 0 or an absurdly small value that
-/// would let a chunked response write gigabytes before any check fires.
-const ABSOLUTE_SIZE_CEILING_BYTES: u64 = 20 * 1024 * 1024 * 1024; // 20 GB
-
-/// Parse and allowlist a download URL. Enforces https + known host.
-/// Called for the initial URL AND for every redirect hop.
-fn validate_download_url(url: &reqwest::Url) -> Result<()> {
-    if url.scheme() != "https" {
-        return Err(anyhow!(
-            "Download URL must use https, got {:?}",
-            url.scheme()
-        ));
-    }
-    // Reject embedded credentials: a catalog entry like
-    // `https://user:token@huggingface.co/...` would forward the Authorization
-    // header through every redirect and hand creds to the redirect target.
-    if !url.username().is_empty() || url.password().is_some() {
-        return Err(anyhow!("Download URL must not contain userinfo"));
-    }
-    let host = url
-        .host_str()
-        .ok_or_else(|| anyhow!("Download URL has no host"))?
-        .to_ascii_lowercase();
-    let ok = DOWNLOAD_HOST_ALLOWLIST
-        .iter()
-        .any(|h| host == *h || host.ends_with(&format!(".{}", h)));
-    if !ok {
-        return Err(anyhow!(
-            "Download host {:?} is not in the allowlist",
-            host
-        ));
-    }
-    Ok(())
-}
-
-/// Reject a path target that has been replaced by a symlink. Opening or
-/// renaming follows symlinks by default, which would let an attacker with
-/// write access to the models directory redirect our writes to arbitrary
-/// files (e.g. ~/.ssh/authorized_keys). `symlink_metadata` inspects the
-/// link itself without following — if the path doesn't exist at all, that's
-/// fine (the create call will make a regular file).
-fn reject_symlink(path: &Path) -> Result<()> {
-    match fs::symlink_metadata(path) {
-        Ok(md) if md.file_type().is_symlink() => Err(anyhow!(
-            "Refusing to write through a symlink at {}",
-            path.display()
-        )),
-        _ => Ok(()),
-    }
-}
-
-/// Reject filenames that could escape `models_dir` (defence in depth).
-fn validate_filename(name: &str) -> Result<()> {
-    if name.is_empty()
-        || name.contains('/')
-        || name.contains('\\')
-        || name.contains("..")
-        || Path::new(name).is_absolute()
-    {
-        return Err(anyhow!("Unsafe LLM model filename: {:?}", name));
-    }
-    Ok(())
-}

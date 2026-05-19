@@ -11,6 +11,7 @@ mod helpers;
 mod input;
 mod managers;
 mod overlay;
+mod secrets;
 mod settings;
 mod shortcut;
 mod signal_handle;
@@ -357,6 +358,7 @@ pub fn run(cli_args: CliArgs) {
         commands::llm::change_openai_compat_base_url_setting,
         commands::llm::change_openai_compat_api_key_setting,
         commands::llm::change_openai_compat_model_setting,
+        commands::llm::get_secret_status,
         helpers::clamshell::is_laptop,
     ]);
 

@@ -761,6 +761,9 @@ async changeOpenaiCompatModelSetting(model: string | null) : Promise<Result<null
     else return { status: "error", error: e  as any };
 }
 },
+async getSecretStatus() : Promise<SecretStatus> {
+    return await TAURI_INVOKE("get_secret_status");
+},
 /**
  * Checks if the Mac is a laptop by detecting battery presence
  * 
@@ -871,6 +874,7 @@ export type ModelUnloadTimeout = "never" | "immediately" | "min_2" | "min_5" | "
 export type OverlayPosition = "none" | "top" | "bottom"
 export type PasteMethod = "ctrl_v" | "direct" | "none" | "shift_insert" | "ctrl_shift_v" | "external_script"
 export type RecordingRetentionPeriod = "never" | "preserve_limit" | "days_3" | "weeks_2" | "months_3"
+export type SecretStatus = { anthropic_set: boolean; openai_compat_set: boolean }
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }
 export type SoundTheme = "marimba" | "pop" | "custom"
 export type TypingTool = "auto" | "wtype" | "kwtype" | "dotool" | "ydotool" | "xdotool"

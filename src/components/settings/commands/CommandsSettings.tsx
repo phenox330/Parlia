@@ -1,9 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Eye, EyeOff, ExternalLink } from "lucide-react";
+import { Plus, Eye, EyeOff, ExternalLink, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { commands } from "@/bindings";
-import type { CommandsLlmProvider, VoiceCommand } from "@/bindings";
+import type {
+  CommandsLlmProvider,
+  SecretStatus,
+  VoiceCommand,
+} from "@/bindings";
 import { SettingsGroup } from "../../ui/SettingsGroup";
 import { Button } from "../../ui/Button";
 import { ToggleSwitch } from "../../ui/ToggleSwitch";
@@ -18,31 +22,42 @@ export const CommandsSettings: React.FC = () => {
   const provider: CommandsLlmProvider =
     (getSetting("commands_llm_provider") as CommandsLlmProvider | undefined) ??
     "parlia";
-  const anthropicKey = getSetting("anthropic_api_key") ?? "";
   const customBaseUrl = getSetting("openai_compat_base_url") ?? "";
-  const customApiKey = getSetting("openai_compat_api_key") ?? "";
   const customModel = getSetting("openai_compat_model") ?? "";
-  const [keyDraft, setKeyDraft] = useState<string>(anthropicKey);
+  // API keys live in the OS keychain (v0.7.14+). The settings store no
+  // longer echoes them back, so the UI tracks "configured ✓ / not set"
+  // via `commands.getSecretStatus()` and only shows the entry input when
+  // the user is creating or replacing a key.
+  const [secretStatus, setSecretStatus] = useState<SecretStatus | null>(null);
+  const [editingAnthropic, setEditingAnthropic] = useState(false);
+  const [editingOpenAiCompat, setEditingOpenAiCompat] = useState(false);
+  const [keyDraft, setKeyDraft] = useState<string>("");
   const [showKey, setShowKey] = useState(false);
   const [baseUrlDraft, setBaseUrlDraft] = useState<string>(customBaseUrl);
-  const [customKeyDraft, setCustomKeyDraft] = useState<string>(customApiKey);
+  const [customKeyDraft, setCustomKeyDraft] = useState<string>("");
   const [showCustomKey, setShowCustomKey] = useState(false);
   const [modelDraft, setModelDraft] = useState<string>(customModel);
   const [voiceCommands, setVoiceCommands] = useState<VoiceCommand[]>([]);
   const addButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Keep the draft in sync when settings refresh (e.g. first load).
+  const refreshSecretStatus = useCallback(async () => {
+    try {
+      setSecretStatus(await commands.getSecretStatus());
+    } catch {
+      // Surface a single toast — keychain access can fail if the user
+      // denies the permission prompt on first read. Silent failure here
+      // would leave the UI stuck in "unknown" state forever.
+      toast.error(t("settings.commands.provider.keychainReadFailed"));
+    }
+  }, [t]);
+
   useEffect(() => {
-    setKeyDraft(anthropicKey);
-  }, [anthropicKey]);
+    void refreshSecretStatus();
+  }, [refreshSecretStatus]);
 
   useEffect(() => {
     setBaseUrlDraft(customBaseUrl);
   }, [customBaseUrl]);
-
-  useEffect(() => {
-    setCustomKeyDraft(customApiKey);
-  }, [customApiKey]);
 
   useEffect(() => {
     setModelDraft(customModel);
@@ -79,10 +94,24 @@ export const CommandsSettings: React.FC = () => {
     void refreshCommands();
   };
 
-  const persistKey = () => {
+  const persistKey = async () => {
     const trimmed = keyDraft.trim();
-    if (trimmed === (anthropicKey ?? "").trim()) return;
-    void updateSetting("anthropic_api_key", trimmed === "" ? null : trimmed);
+    if (trimmed === "") {
+      // Empty draft on blur: cancel the edit, don't touch the keychain.
+      setEditingAnthropic(false);
+      return;
+    }
+    await updateSetting("anthropic_api_key", trimmed);
+    setKeyDraft("");
+    setEditingAnthropic(false);
+    await refreshSecretStatus();
+  };
+
+  const removeAnthropicKey = async () => {
+    await updateSetting("anthropic_api_key", null);
+    setKeyDraft("");
+    setEditingAnthropic(false);
+    await refreshSecretStatus();
   };
 
   const persistBaseUrl = () => {
@@ -94,13 +123,23 @@ export const CommandsSettings: React.FC = () => {
     );
   };
 
-  const persistCustomKey = () => {
+  const persistCustomKey = async () => {
     const trimmed = customKeyDraft.trim();
-    if (trimmed === (customApiKey ?? "").trim()) return;
-    void updateSetting(
-      "openai_compat_api_key",
-      trimmed === "" ? null : trimmed,
-    );
+    if (trimmed === "") {
+      setEditingOpenAiCompat(false);
+      return;
+    }
+    await updateSetting("openai_compat_api_key", trimmed);
+    setCustomKeyDraft("");
+    setEditingOpenAiCompat(false);
+    await refreshSecretStatus();
+  };
+
+  const removeOpenAiCompatKey = async () => {
+    await updateSetting("openai_compat_api_key", null);
+    setCustomKeyDraft("");
+    setEditingOpenAiCompat(false);
+    await refreshSecretStatus();
   };
 
   const persistModel = () => {
@@ -109,7 +148,7 @@ export const CommandsSettings: React.FC = () => {
     void updateSetting("openai_compat_model", trimmed === "" ? null : trimmed);
   };
 
-  const applyOllamaPreset = () => {
+  const applyOllamaPreset = async () => {
     const url = "http://localhost:11434/v1";
     const model = "qwen2.5:1.5b";
     setBaseUrlDraft(url);
@@ -117,7 +156,9 @@ export const CommandsSettings: React.FC = () => {
     setCustomKeyDraft("");
     void updateSetting("openai_compat_base_url", url);
     void updateSetting("openai_compat_model", model);
-    void updateSetting("openai_compat_api_key", null);
+    await updateSetting("openai_compat_api_key", null);
+    setEditingOpenAiCompat(false);
+    await refreshSecretStatus();
   };
 
   return (
@@ -188,42 +229,75 @@ export const CommandsSettings: React.FC = () => {
               >
                 {t("settings.commands.provider.apiKeyLabel")}
               </label>
-              <div className="flex items-stretch gap-2">
-                <div className="relative flex-1">
-                  <input
-                    id="anthropic-api-key"
-                    type={showKey ? "text" : "password"}
-                    value={keyDraft}
-                    onChange={(e) => setKeyDraft(e.target.value)}
-                    onBlur={persistKey}
-                    placeholder="sk-ant-…"
-                    autoComplete="off"
-                    spellCheck={false}
-                    className="w-full px-2 py-1.5 pr-8 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-logo-primary"
+              {secretStatus?.anthropic_set && !editingAnthropic ? (
+                <div className="flex items-center gap-2 px-2 py-1.5 border border-border rounded-md bg-mid-gray/5">
+                  <Check
+                    size={14}
+                    className="text-logo-primary shrink-0"
+                    aria-hidden
                   />
+                  <span className="text-sm text-text/80 flex-1">
+                    {t("settings.commands.provider.keyConfigured")}
+                  </span>
                   <button
                     type="button"
-                    onClick={() => setShowKey((s) => !s)}
-                    aria-label={
-                      showKey
-                        ? t("settings.commands.provider.hideKey")
-                        : t("settings.commands.provider.showKey")
-                    }
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-text/40 hover:text-text"
+                    onClick={() => {
+                      setKeyDraft("");
+                      setEditingAnthropic(true);
+                    }}
+                    className="text-xs px-2 py-1 border border-border rounded-md hover:bg-mid-gray/10 text-text/80"
                   >
-                    {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                    {t("settings.commands.provider.replace")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void removeAnthropicKey()}
+                    className="text-xs px-2 py-1 border border-border rounded-md hover:bg-red-500/10 hover:border-red-500/50 text-text/70 inline-flex items-center gap-1"
+                    aria-label={t("settings.commands.provider.remove")}
+                  >
+                    <X size={12} />
+                    {t("settings.commands.provider.remove")}
                   </button>
                 </div>
-                <a
-                  href="https://console.anthropic.com/settings/keys"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs px-2 py-1.5 border border-border rounded-md hover:bg-mid-gray/10 text-text/70"
-                >
-                  <ExternalLink size={12} />
-                  {t("settings.commands.provider.getKey")}
-                </a>
-              </div>
+              ) : (
+                <div className="flex items-stretch gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      id="anthropic-api-key"
+                      type={showKey ? "text" : "password"}
+                      value={keyDraft}
+                      onChange={(e) => setKeyDraft(e.target.value)}
+                      onBlur={() => void persistKey()}
+                      placeholder="sk-ant-…"
+                      autoComplete="off"
+                      spellCheck={false}
+                      autoFocus={editingAnthropic}
+                      className="w-full px-2 py-1.5 pr-8 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-logo-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowKey((s) => !s)}
+                      aria-label={
+                        showKey
+                          ? t("settings.commands.provider.hideKey")
+                          : t("settings.commands.provider.showKey")
+                      }
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-text/40 hover:text-text"
+                    >
+                      {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                  <a
+                    href="https://console.anthropic.com/settings/keys"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs px-2 py-1.5 border border-border rounded-md hover:bg-mid-gray/10 text-text/70"
+                  >
+                    <ExternalLink size={12} />
+                    {t("settings.commands.provider.getKey")}
+                  </a>
+                </div>
+              )}
               <p className="text-xs text-text/50 mt-1">
                 {t("settings.commands.provider.apiKeyHelp")}
               </p>
@@ -295,33 +369,66 @@ export const CommandsSettings: React.FC = () => {
                 >
                   {t("settings.commands.provider.customApiKeyLabel")}
                 </label>
-                <div className="relative">
-                  <input
-                    id="openai-compat-api-key"
-                    type={showCustomKey ? "text" : "password"}
-                    value={customKeyDraft}
-                    onChange={(e) => setCustomKeyDraft(e.target.value)}
-                    onBlur={persistCustomKey}
-                    placeholder={t(
-                      "settings.commands.provider.customApiKeyPlaceholder",
-                    )}
-                    autoComplete="off"
-                    spellCheck={false}
-                    className="w-full px-2 py-1.5 pr-8 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-logo-primary"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCustomKey((s) => !s)}
-                    aria-label={
-                      showCustomKey
-                        ? t("settings.commands.provider.hideKey")
-                        : t("settings.commands.provider.showKey")
-                    }
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-text/40 hover:text-text"
-                  >
-                    {showCustomKey ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-                </div>
+                {secretStatus?.openai_compat_set && !editingOpenAiCompat ? (
+                  <div className="flex items-center gap-2 px-2 py-1.5 border border-border rounded-md bg-mid-gray/5">
+                    <Check
+                      size={14}
+                      className="text-logo-primary shrink-0"
+                      aria-hidden
+                    />
+                    <span className="text-sm text-text/80 flex-1">
+                      {t("settings.commands.provider.keyConfigured")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCustomKeyDraft("");
+                        setEditingOpenAiCompat(true);
+                      }}
+                      className="text-xs px-2 py-1 border border-border rounded-md hover:bg-mid-gray/10 text-text/80"
+                    >
+                      {t("settings.commands.provider.replace")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void removeOpenAiCompatKey()}
+                      className="text-xs px-2 py-1 border border-border rounded-md hover:bg-red-500/10 hover:border-red-500/50 text-text/70 inline-flex items-center gap-1"
+                      aria-label={t("settings.commands.provider.remove")}
+                    >
+                      <X size={12} />
+                      {t("settings.commands.provider.remove")}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <input
+                      id="openai-compat-api-key"
+                      type={showCustomKey ? "text" : "password"}
+                      value={customKeyDraft}
+                      onChange={(e) => setCustomKeyDraft(e.target.value)}
+                      onBlur={() => void persistCustomKey()}
+                      placeholder={t(
+                        "settings.commands.provider.customApiKeyPlaceholder",
+                      )}
+                      autoComplete="off"
+                      spellCheck={false}
+                      autoFocus={editingOpenAiCompat}
+                      className="w-full px-2 py-1.5 pr-8 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-logo-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomKey((s) => !s)}
+                      aria-label={
+                        showCustomKey
+                          ? t("settings.commands.provider.hideKey")
+                          : t("settings.commands.provider.showKey")
+                      }
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-text/40 hover:text-text"
+                    >
+                      {showCustomKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                )}
                 <p className="text-xs text-text/50 mt-1">
                   {t("settings.commands.provider.customApiKeyHelp")}
                 </p>

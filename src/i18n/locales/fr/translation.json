@@ -348,7 +348,11 @@
         "customDescription": "N'importe quel endpoint compatible OpenAI — fonctionne avec Ollama (local, gratuit), LM Studio, Groq, OpenRouter, DeepSeek, vLLM…",
         "localDescription": "Inférence sur l'appareil via llama.cpp. Crash connu au chargement du modèle sur certains macOS.",
         "apiKeyLabel": "Clé API Anthropic",
-        "apiKeyHelp": "Stockée localement sur votre Mac. Obtenez une clé sur console.anthropic.com — ajoutez 5 $ de crédit et ça tient des mois.",
+        "apiKeyHelp": "Stockée dans le trousseau macOS — jamais en clair sur disque. Obtenez une clé sur console.anthropic.com ; 5 $ de crédit tiennent des mois.",
+        "keyConfigured": "Clé API configurée",
+        "replace": "Remplacer",
+        "remove": "Supprimer",
+        "keychainReadFailed": "Lecture du trousseau impossible. Autorisez l'accès dans Préférences Système → Confidentialité si vous l'avez refusé.",
         "getKey": "Obtenir une clé",
         "showKey": "Afficher la clé",
         "hideKey": "Masquer la clé",
@@ -359,7 +363,7 @@
         "customModelHelp": "L'identifiant attendu par le fournisseur. Ollama : qwen2.5:1.5b · Groq : llama-3.1-8b-instant · OpenRouter : openai/gpt-4o-mini",
         "customApiKeyLabel": "Clé API (optionnelle)",
         "customApiKeyPlaceholder": "Laisser vide pour Ollama local",
-        "customApiKeyHelp": "Envoyée en tant que Bearer token. Laisser vide pour Ollama / LM Studio local — ils acceptent les appels non authentifiés par défaut."
+        "customApiKeyHelp": "Stockée dans le trousseau macOS. Laisser vide pour Ollama / LM Studio local — ils acceptent les appels non authentifiés par défaut."
       },
       "addCommand": "Ajouter une commande",
       "keyword": "Mot-clé",

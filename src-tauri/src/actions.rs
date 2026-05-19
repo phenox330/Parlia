@@ -109,8 +109,8 @@ async fn apply_voice_command(ah: &AppHandle, settings: &AppSettings, text: &str)
             crate::cloud_llm::generate_parlia_cloud(&prompt, &rest).await
         }
         CommandsLlmProvider::Anthropic => {
-            let key = match settings.anthropic_api_key.as_deref() {
-                Some(k) if !k.trim().is_empty() => k.to_string(),
+            let key = match crate::secrets::get_secret(crate::secrets::SecretName::Anthropic) {
+                Ok(Some(k)) if !k.trim().is_empty() => k,
                 _ => {
                     let _ = ah.emit(
                         "llm-error",
@@ -144,7 +144,10 @@ async fn apply_voice_command(ah: &AppHandle, settings: &AppSettings, text: &str)
                     return None;
                 }
             };
-            let api_key = settings.openai_compat_api_key.clone();
+            let api_key = crate::secrets::get_secret(crate::secrets::SecretName::OpenAiCompat)
+                .ok()
+                .flatten()
+                .filter(|k| !k.trim().is_empty());
             crate::cloud_llm::generate_openai_compatible(
                 &base_url,
                 api_key.as_deref(),

@@ -348,7 +348,11 @@
         "customDescription": "Any OpenAI-compatible endpoint — works with Ollama (local, free), LM Studio, Groq, OpenRouter, DeepSeek, vLLM…",
         "localDescription": "On-device inference via llama.cpp. Known to crash during model load on some macOS builds.",
         "apiKeyLabel": "Anthropic API Key",
-        "apiKeyHelp": "Stored locally on your Mac. Get a key at console.anthropic.com — add $5 of credit and you're good for months.",
+        "apiKeyHelp": "Stored in your macOS Keychain — never in plaintext on disk. Get a key at console.anthropic.com; $5 of credit lasts months.",
+        "keyConfigured": "API key configured",
+        "replace": "Replace",
+        "remove": "Remove",
+        "keychainReadFailed": "Couldn't read the keychain. Grant access in System Settings → Privacy & Security if you denied it.",
         "getKey": "Get a key",
         "showKey": "Show API key",
         "hideKey": "Hide API key",
@@ -359,7 +363,7 @@
         "customModelHelp": "The model id the provider expects. Ollama: qwen2.5:1.5b · Groq: llama-3.1-8b-instant · OpenRouter: openai/gpt-4o-mini",
         "customApiKeyLabel": "API Key (optional)",
         "customApiKeyPlaceholder": "Leave blank for local Ollama",
-        "customApiKeyHelp": "Sent as a Bearer token. Leave empty for local Ollama / LM Studio — they accept unauthenticated calls by default."
+        "customApiKeyHelp": "Stored in your macOS Keychain. Leave empty for local Ollama / LM Studio — they accept unauthenticated calls by default."
       },
       "addCommand": "Add command",
       "keyword": "Keyword",

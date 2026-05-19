@@ -81,6 +81,9 @@ llama-cpp-sys-2 = "0.1.145"
 uuid = { version = "1", features = ["v4"] }
 sha2 = "0.10"
 bytes = "1"
+# Cross-platform OS keychain (macOS Keychain, Windows Credential Manager,
+# Linux Secret Service). Used to keep LLM API keys off disk.
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
 
 [target.'cfg(unix)'.dependencies]
 signal-hook = "0.3"

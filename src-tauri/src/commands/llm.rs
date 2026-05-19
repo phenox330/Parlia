@@ -1,10 +1,31 @@
 use crate::managers::llm::{DownloadResult, LlmModelInfo, LlmModelManager};
+use crate::secrets::{has_secret, SecretName};
 use crate::settings::{get_settings, write_settings, CommandsLlmProvider, VoiceCommand};
 use log::info;
 use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
+use specta::Type;
 use std::sync::{Arc, Mutex, MutexGuard};
 use tauri::{AppHandle, State};
 use uuid::Uuid;
+
+/// "Is this secret stored?" view returned to the UI. Mirrors the shape of
+/// `crate::secrets::SecretName` so the frontend can render a "Configured ✓"
+/// state without ever receiving the key value.
+#[derive(Serialize, Deserialize, Type, Debug, Clone, Copy)]
+pub struct SecretStatus {
+    pub anthropic_set: bool,
+    pub openai_compat_set: bool,
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn get_secret_status() -> SecretStatus {
+    SecretStatus {
+        anthropic_set: has_secret(SecretName::Anthropic),
+        openai_compat_set: has_secret(SecretName::OpenAiCompat),
+    }
+}
 
 /// Serialises read-modify-write of voice commands in settings so concurrent
 /// IPC calls can't lose updates (the plugin-store IO is not transactional).
@@ -221,21 +242,17 @@ pub fn change_commands_llm_provider_setting(
 
 #[tauri::command]
 #[specta::specta]
-pub fn change_anthropic_api_key_setting(app: AppHandle, key: Option<String>) -> Result<(), String> {
+pub fn change_anthropic_api_key_setting(
+    _app: AppHandle,
+    key: Option<String>,
+) -> Result<(), String> {
     let _guard = lock_commands();
-    let mut settings = get_settings(&app);
-    // Normalise empty/whitespace-only input to None so the backend never has
-    // to defend against blank strings later.
-    settings.anthropic_api_key = key.and_then(|k| {
-        let trimmed = k.trim().to_string();
-        if trimmed.is_empty() {
-            None
-        } else {
-            Some(trimmed)
-        }
-    });
-    write_settings(&app, settings);
-    Ok(())
+    // API keys live in the OS keychain, never in the settings store.
+    // Empty/whitespace-only input deletes the entry — matches the "remove
+    // key" UX path. Errors bubble up so the frontend can show a toast.
+    let value = key.unwrap_or_default();
+    crate::secrets::set_secret(crate::secrets::SecretName::Anthropic, &value)
+        .map_err(|e| format!("Failed to store Anthropic API key: {e}"))
 }
 
 #[tauri::command]
@@ -276,14 +293,13 @@ pub fn change_openai_compat_base_url_setting(
 #[tauri::command]
 #[specta::specta]
 pub fn change_openai_compat_api_key_setting(
-    app: AppHandle,
+    _app: AppHandle,
     key: Option<String>,
 ) -> Result<(), String> {
     let _guard = lock_commands();
-    let mut settings = get_settings(&app);
-    settings.openai_compat_api_key = normalize_opt(key);
-    write_settings(&app, settings);
-    Ok(())
+    let value = key.unwrap_or_default();
+    crate::secrets::set_secret(crate::secrets::SecretName::OpenAiCompat, &value)
+        .map_err(|e| format!("Failed to store OpenAI-compatible API key: {e}"))
 }
 
 #[tauri::command]

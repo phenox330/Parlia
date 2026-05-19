@@ -369,9 +369,13 @@ pub struct AppSettings {
     pub commands_llm_model_id: Option<String>,
     #[serde(default)]
     pub commands_llm_provider: CommandsLlmProvider,
-    /// Anthropic API key — stored plaintext in the settings store.
-    /// Ship a keychain-backed secret store before distributing widely.
-    #[serde(default)]
+    /// Migration-only field. From v0.7.14 the Anthropic key lives in the
+    /// OS keychain (see `crate::secrets`); this field is read from old
+    /// `settings_store.json` files exactly once so `load_or_create_app_settings`
+    /// can move the value into the keychain, then it stays `None` forever
+    /// (skipped from serialization). Use `secrets::get_secret(Anthropic)`
+    /// for runtime reads.
+    #[serde(default, skip_serializing)]
     pub anthropic_api_key: Option<String>,
     #[serde(default = "default_anthropic_model")]
     pub anthropic_model: String,
@@ -380,9 +384,11 @@ pub struct AppSettings {
     /// `https://api.groq.com/openai/v1`, `https://openrouter.ai/api/v1`.
     #[serde(default)]
     pub openai_compat_base_url: Option<String>,
-    /// Optional bearer token sent as `Authorization: Bearer <key>`. Blank is
-    /// valid — Ollama and LM Studio don't require auth by default.
-    #[serde(default)]
+    /// Migration-only field. See `anthropic_api_key` above — same model: read
+    /// once from legacy `settings_store.json`, moved into the OS keychain,
+    /// never serialized again. Runtime reads go through
+    /// `secrets::get_secret(OpenAiCompat)`.
+    #[serde(default, skip_serializing)]
     pub openai_compat_api_key: Option<String>,
     /// Model id as understood by the provider (e.g. `qwen2.5:1.5b`,
     /// `llama-3.1-8b-instant`, `openai/gpt-4o-mini`).
@@ -630,6 +636,43 @@ fn default_anthropic_model() -> String {
     "claude-haiku-4-5-20251001".to_string()
 }
 
+/// Move a plaintext key from the settings struct into the OS keychain.
+/// Returns `true` when the settings object was mutated (so the caller knows
+/// to rewrite the on-disk store). No-op on empty values. Logs success/
+/// failure without ever printing the value itself.
+fn migrate_plaintext_key_to_keychain(
+    field: &mut Option<String>,
+    secret: crate::secrets::SecretName,
+    field_name: &str,
+) -> bool {
+    let Some(value) = field.as_ref() else {
+        return false;
+    };
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        // Existing empty/whitespace string — clear the field but no keychain write.
+        *field = None;
+        return true;
+    }
+    match crate::secrets::set_secret(secret, trimmed) {
+        Ok(()) => {
+            log::info!(
+                "Migrated {field_name} from settings store to OS keychain (length={})",
+                trimmed.len()
+            );
+            *field = None;
+            true
+        }
+        Err(e) => {
+            // Don't blank the field if we couldn't store the key — losing
+            // the user's paid API key during a failed migration would be
+            // worse than leaving it in plaintext for another try.
+            log::warn!("Keychain migration for {field_name} failed: {e}");
+            false
+        }
+    }
+}
+
 pub fn load_or_create_app_settings(app: &AppHandle) -> AppSettings {
     // Initialize store
     let store = app
@@ -651,6 +694,26 @@ pub fn load_or_create_app_settings(app: &AppHandle) -> AppSettings {
                         settings.bindings.insert(key, value);
                         updated = true;
                     }
+                }
+
+                // One-shot migration from plaintext API keys → OS keychain.
+                // Pre-v0.7.14 installs persisted Anthropic + OpenAI-compat
+                // keys directly inside `settings_store.json`. Move them into
+                // the keychain on first launch, then blank the in-memory
+                // fields so the rewrite below drops them from disk.
+                if migrate_plaintext_key_to_keychain(
+                    &mut settings.anthropic_api_key,
+                    crate::secrets::SecretName::Anthropic,
+                    "anthropic_api_key",
+                ) {
+                    updated = true;
+                }
+                if migrate_plaintext_key_to_keychain(
+                    &mut settings.openai_compat_api_key,
+                    crate::secrets::SecretName::OpenAiCompat,
+                    "openai_compat_api_key",
+                ) {
+                    updated = true;
                 }
 
                 if updated {
@@ -763,5 +826,52 @@ mod tests {
         let rendered = format!("{:?}", settings);
         assert!(rendered.contains("anthropic_api_key: \"<unset>\""));
         assert!(rendered.contains("openai_compat_api_key: \"<unset>\""));
+    }
+
+    #[test]
+    fn api_keys_are_never_serialized_to_json() {
+        // Post-Keychain migration: the two key fields exist in memory only
+        // to read legacy v0.7.13 settings_store.json files on first launch.
+        // They MUST NOT round-trip back to disk, otherwise the migration is
+        // a no-op the moment write_settings runs.
+        let mut settings = get_default_settings();
+        settings.anthropic_api_key = Some("sk-ant-should-not-persist".to_string());
+        settings.openai_compat_api_key = Some("sk-or-should-not-persist".to_string());
+
+        let json = serde_json::to_string(&settings).expect("serialize");
+
+        assert!(
+            !json.contains("anthropic_api_key"),
+            "anthropic_api_key leaked to JSON: {json}"
+        );
+        assert!(
+            !json.contains("openai_compat_api_key"),
+            "openai_compat_api_key leaked to JSON: {json}"
+        );
+        assert!(
+            !json.contains("sk-ant-should-not-persist"),
+            "Anthropic key value leaked to JSON: {json}"
+        );
+        assert!(
+            !json.contains("sk-or-should-not-persist"),
+            "OpenAI-compat key value leaked to JSON: {json}"
+        );
+    }
+
+    #[test]
+    fn legacy_json_with_plaintext_keys_still_deserializes() {
+        // Forward-compat the other way: a v0.7.13 settings_store.json that
+        // has anthropic_api_key in plaintext must parse cleanly so the
+        // migration step in `load_or_create_app_settings` can move it.
+        let legacy = serde_json::json!({
+            "bindings": {},
+            "push_to_talk": false,
+            "audio_feedback": true,
+            "anthropic_api_key": "sk-ant-legacy",
+            "openai_compat_api_key": "sk-or-legacy",
+        });
+        let parsed: AppSettings = serde_json::from_value(legacy).expect("parse");
+        assert_eq!(parsed.anthropic_api_key.as_deref(), Some("sk-ant-legacy"));
+        assert_eq!(parsed.openai_compat_api_key.as_deref(), Some("sk-or-legacy"));
     }
 }

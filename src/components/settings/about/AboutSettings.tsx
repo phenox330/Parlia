@@ -6,10 +6,12 @@ import { SettingContainer } from "../../ui/SettingContainer";
 import { AppDataDirectory } from "../AppDataDirectory";
 import { AppLanguageSelector } from "../AppLanguageSelector";
 import { LogDirectory } from "../debug";
+import { AcknowledgmentsModal } from "./AcknowledgmentsModal";
 
 export const AboutSettings: React.FC = () => {
   const { t } = useTranslation();
   const [version, setVersion] = useState("");
+  const [creditsOpen, setCreditsOpen] = useState(false);
 
   useEffect(() => {
     const fetchVersion = async () => {
@@ -42,6 +44,24 @@ export const AboutSettings: React.FC = () => {
         <LogDirectory grouped={true} />
       </SettingsGroup>
 
+      {/* Intentionally discreet — a single small line at the bottom of
+          About. Satisfies the MIT permission-notice requirement (the
+          LICENSE file is bundled in src-tauri/resources/) and the
+          upstream Handy attribution without crowding the panel. */}
+      <p className="text-xs text-text/40 text-center pt-2">
+        <button
+          type="button"
+          onClick={() => setCreditsOpen(true)}
+          className="hover:text-text/70 focus:outline-none focus-visible:underline"
+        >
+          {t("settings.about.acknowledgments.openButton")}
+        </button>
+      </p>
+
+      <AcknowledgmentsModal
+        open={creditsOpen}
+        onClose={() => setCreditsOpen(false)}
+      />
     </div>
   );
 };

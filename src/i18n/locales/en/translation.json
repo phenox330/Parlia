@@ -520,12 +520,12 @@
         "button": "Donate"
       },
       "acknowledgments": {
-        "title": "Acknowledgments",
-        "whisper": {
-          "title": "Whisper.cpp",
-          "description": "High-performance inference of OpenAI's Whisper automatic speech recognition model",
-          "details": "Parlia uses Whisper.cpp for fast, local speech-to-text processing. Thanks to the amazing work by Georgi Gerganov and contributors."
-        }
+        "title": "Open source & credits",
+        "openButton": "Open source & credits",
+        "close": "Close",
+        "intro": "Parlia is a fork of Handy by CJ Pais, distributed under the MIT licence. It stands on the shoulders of fast, open, on-device ML — thanks to every contributor below.",
+        "depsHeading": "Major dependencies",
+        "licenseHeading": "MIT licence"
       }
     }
   },

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { platform } from "@tauri-apps/plugin-os";
+import { relaunch } from "@tauri-apps/plugin-process";
 import {
   checkAccessibilityPermission,
   requestAccessibilityPermission,
@@ -11,7 +12,14 @@ import { toast } from "sonner";
 import { commands } from "@/bindings";
 import { useSettingsStore } from "@/stores/settingsStore";
 import ParliaTextLogo from "../icons/ParliaTextLogo";
-import { Keyboard, Mic, Check, Loader2 } from "lucide-react";
+import { Keyboard, Mic, Check, Loader2, RefreshCw } from "lucide-react";
+
+/// macOS TCC caches the result of the first AXIsProcessTrusted call per
+/// process. If the user grants Accessibility AFTER the app has already
+/// started polling, the polling never flips to "granted" until the
+/// process restarts. We show a "Restart Parlia" hint once we've been
+/// waiting on a permission for this long.
+const STALL_HINT_DELAY_MS = 6000;
 
 interface AccessibilityOnboardingProps {
   onComplete: () => void;
@@ -41,8 +49,11 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
   });
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const errorCountRef = useRef<number>(0);
   const MAX_POLLING_ERRORS = 3;
+  const [showRestartHint, setShowRestartHint] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
 
   const allGranted =
     permissions.accessibility === "granted" &&
@@ -109,6 +120,14 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
   const startPolling = useCallback(() => {
     if (pollingRef.current) return;
 
+    // Arm the stall timer the first time polling starts. The hint stays
+    // hidden until we've genuinely been waiting — quick grants (mic dialog
+    // accept) never trigger it.
+    if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
+    stallTimerRef.current = setTimeout(() => {
+      setShowRestartHint(true);
+    }, STALL_HINT_DELAY_MS);
+
     pollingRef.current = setInterval(async () => {
       try {
         const [accessibilityGranted, microphoneGranted] = await Promise.all([
@@ -143,6 +162,11 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
             clearInterval(pollingRef.current);
             pollingRef.current = null;
           }
+          if (stallTimerRef.current) {
+            clearTimeout(stallTimerRef.current);
+            stallTimerRef.current = null;
+          }
+          setShowRestartHint(false);
           // Now that we have mic permission, refresh audio devices
           await Promise.all([refreshAudioDevices(), refreshOutputDevices()]);
           timeoutRef.current = setTimeout(() => onComplete(), 500);
@@ -175,8 +199,22 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      if (stallTimerRef.current) {
+        clearTimeout(stallTimerRef.current);
+      }
     };
   }, []);
+
+  const handleRestart = async () => {
+    setIsRestarting(true);
+    try {
+      await relaunch();
+    } catch (error) {
+      console.error("Failed to relaunch Parlia:", error);
+      toast.error(t("onboarding.permissions.errors.restartFailed"));
+      setIsRestarting(false);
+    }
+  };
 
   const handleGrantAccessibility = async () => {
     try {
@@ -313,6 +351,27 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
             </div>
           </div>
         </div>
+
+        {/* macOS TCC restart hint — see comment at the top of the file */}
+        {showRestartHint && !allGranted && (
+          <div className="w-full p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-sm space-y-3">
+            <p className="text-text/80">
+              {t("onboarding.permissions.restartHint")}
+            </p>
+            <button
+              onClick={() => void handleRestart()}
+              disabled={isRestarting}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-text text-sm font-medium transition-colors disabled:opacity-60"
+            >
+              {isRestarting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+              {t("onboarding.permissions.restartButton")}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

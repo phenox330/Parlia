@@ -6,5 +6,18 @@
     <true/>
     <key>com.apple.security.device.audio-input</key>
     <true/>
+    <!--
+      Outbound HTTPS, required under Hardened Runtime. Used by:
+        - Parlia Cloud proxy (www.parlia.fr/api/v1/commands)
+        - Anthropic API (api.anthropic.com)
+        - OpenAI-compatible endpoints (Ollama, Groq, OpenRouter, …)
+        - Model downloads (blob.handy.computer, huggingface.co)
+      Without this, calls fail silently on macOS Big Sur+ with
+      Hardened Runtime, and corporate Macs that lock down sandboxed
+      apps don't see "Parlia Cloud unreachable" — they just see
+      nothing happen.
+    -->
+    <key>com.apple.security.network.client</key>
+    <true/>
   </dict>
 </plist>

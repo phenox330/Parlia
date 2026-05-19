@@ -286,7 +286,12 @@ impl Default for CommandsLlmProvider {
 }
 
 /* still handy for composing the initial JSON in the store ------------- */
-#[derive(Serialize, Deserialize, Debug, Clone, Type)]
+/// `Debug` is hand-rolled below so that `anthropic_api_key` and
+/// `openai_compat_api_key` are redacted from any `{:?}` formatting — the
+/// settings struct is `debug!`-logged on every load, and bug reports
+/// routinely include log files. Drop this impl only once the keys are
+/// out of the struct entirely (Keychain migration).
+#[derive(Serialize, Deserialize, Clone, Type)]
 pub struct AppSettings {
     pub bindings: HashMap<String, ShortcutBinding>,
     pub push_to_talk: bool,
@@ -383,6 +388,70 @@ pub struct AppSettings {
     /// `llama-3.1-8b-instant`, `openai/gpt-4o-mini`).
     #[serde(default)]
     pub openai_compat_model: Option<String>,
+}
+
+/// Used by the manual `Debug` impl on `AppSettings` to keep API keys out
+/// of logs. Returns `"<set>"` / `"<unset>"` rather than the actual value.
+fn redact_opt_key(value: &Option<String>) -> &'static str {
+    match value.as_deref() {
+        Some(s) if !s.is_empty() => "<set>",
+        _ => "<unset>",
+    }
+}
+
+impl std::fmt::Debug for AppSettings {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AppSettings")
+            .field("bindings", &self.bindings)
+            .field("push_to_talk", &self.push_to_talk)
+            .field("audio_feedback", &self.audio_feedback)
+            .field("audio_feedback_volume", &self.audio_feedback_volume)
+            .field("sound_theme", &self.sound_theme)
+            .field("start_hidden", &self.start_hidden)
+            .field("autostart_enabled", &self.autostart_enabled)
+            .field("update_checks_enabled", &self.update_checks_enabled)
+            .field("selected_model", &self.selected_model)
+            .field("always_on_microphone", &self.always_on_microphone)
+            .field("selected_microphone", &self.selected_microphone)
+            .field("clamshell_microphone", &self.clamshell_microphone)
+            .field("selected_output_device", &self.selected_output_device)
+            .field("translate_to_english", &self.translate_to_english)
+            .field("selected_language", &self.selected_language)
+            .field("overlay_position", &self.overlay_position)
+            .field("debug_mode", &self.debug_mode)
+            .field("log_level", &self.log_level)
+            .field("custom_words", &self.custom_words)
+            .field("model_unload_timeout", &self.model_unload_timeout)
+            .field("word_correction_threshold", &self.word_correction_threshold)
+            .field("history_limit", &self.history_limit)
+            .field("recording_retention_period", &self.recording_retention_period)
+            .field("paste_method", &self.paste_method)
+            .field("clipboard_handling", &self.clipboard_handling)
+            .field("auto_submit", &self.auto_submit)
+            .field("auto_submit_key", &self.auto_submit_key)
+            .field("mute_while_recording", &self.mute_while_recording)
+            .field("append_trailing_space", &self.append_trailing_space)
+            .field("app_language", &self.app_language)
+            .field("experimental_enabled", &self.experimental_enabled)
+            .field("keyboard_implementation", &self.keyboard_implementation)
+            .field("show_tray_icon", &self.show_tray_icon)
+            .field("paste_delay_ms", &self.paste_delay_ms)
+            .field("typing_tool", &self.typing_tool)
+            .field("external_script_path", &self.external_script_path)
+            .field("commands_enabled", &self.commands_enabled)
+            .field("commands", &self.commands)
+            .field("commands_llm_model_id", &self.commands_llm_model_id)
+            .field("commands_llm_provider", &self.commands_llm_provider)
+            .field("anthropic_api_key", &redact_opt_key(&self.anthropic_api_key))
+            .field("anthropic_model", &self.anthropic_model)
+            .field("openai_compat_base_url", &self.openai_compat_base_url)
+            .field(
+                "openai_compat_api_key",
+                &redact_opt_key(&self.openai_compat_api_key),
+            )
+            .field("openai_compat_model", &self.openai_compat_model)
+            .finish()
+    }
 }
 
 fn default_model() -> String {
@@ -667,5 +736,32 @@ mod tests {
         let settings = get_default_settings();
         assert!(!settings.auto_submit);
         assert_eq!(settings.auto_submit_key, AutoSubmitKey::Enter);
+    }
+
+    #[test]
+    fn debug_redacts_api_keys() {
+        let mut settings = get_default_settings();
+        settings.anthropic_api_key = Some("sk-ant-secret-do-not-leak".to_string());
+        settings.openai_compat_api_key = Some("sk-or-secret-do-not-leak".to_string());
+
+        let rendered = format!("{:?}", settings);
+        assert!(
+            !rendered.contains("sk-ant-secret-do-not-leak"),
+            "Anthropic key leaked through Debug: {rendered}"
+        );
+        assert!(
+            !rendered.contains("sk-or-secret-do-not-leak"),
+            "OpenAI-compat key leaked through Debug: {rendered}"
+        );
+        assert!(rendered.contains("anthropic_api_key: \"<set>\""));
+        assert!(rendered.contains("openai_compat_api_key: \"<set>\""));
+    }
+
+    #[test]
+    fn debug_marks_empty_keys_as_unset() {
+        let settings = get_default_settings();
+        let rendered = format!("{:?}", settings);
+        assert!(rendered.contains("anthropic_api_key: \"<unset>\""));
+        assert!(rendered.contains("openai_compat_api_key: \"<unset>\""));
     }
 }

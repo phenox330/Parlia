@@ -67,22 +67,16 @@ const AccessibilityPermissions: React.FC = () => {
     return null;
   }
 
-  // Configure button text and style based on state
-  const buttonConfig: Record<PermissionState, ButtonConfig | null> = {
-    request: {
-      text: t("accessibility.openSettings"),
-      className:
-        "px-2 py-1 text-sm font-semibold bg-mid-gray/10 border  border-mid-gray/80 hover:bg-logo-primary/10 rounded cursor-pointer hover:border-logo-primary",
-    },
-    verify: {
-      text: t("accessibility.openSettings"),
-      className:
-        "bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-1 px-3 rounded-md text-sm flex items-center justify-center cursor-pointer",
-    },
-    granted: null,
+  // Both interactive states share the same UX: same text, same action
+  // (handleButtonClick dispatches on state internally), and now the same
+  // dark-theme styling. The previous `verify` className was light-mode
+  // hardcoded (bg-gray-100 / text-gray-800) and bled white-on-black on
+  // the forced dark palette.
+  const config: ButtonConfig = {
+    text: t("accessibility.openSettings"),
+    className:
+      "px-2 py-1 text-sm font-semibold bg-mid-gray/10 border border-mid-gray/80 hover:bg-logo-primary/10 rounded cursor-pointer hover:border-logo-primary",
   };
-
-  const config = buttonConfig[permissionState] as ButtonConfig;
 
   return (
     <div className="p-4 w-full rounded-lg border border-mid-gray">

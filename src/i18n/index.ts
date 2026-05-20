@@ -9,13 +9,16 @@ import {
   updateDocumentLanguage,
 } from "@/lib/utils/rtl";
 
-// Auto-discover translation files using Vite's glob import
+// Vite glob restricted to the two locales we currently expose in the UI.
+// Other locale folders under ./locales/ exist for future reactivation —
+// see languages.ts for the reactivation checklist. Restricting the glob
+// here (rather than just filtering in JS) keeps the unused JSON bundles
+// out of the production JS bundle entirely.
 const localeModules = import.meta.glob<{ default: Record<string, unknown> }>(
-  "./locales/*/translation.json",
+  "./locales/{en,fr}/translation.json",
   { eager: true },
 );
 
-// Build resources from discovered locale files
 const resources: Record<string, { translation: Record<string, unknown> }> = {};
 for (const [path, module] of Object.entries(localeModules)) {
   const langCode = path.match(/\.\/locales\/(.+)\/translation\.json/)?.[1];

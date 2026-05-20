@@ -1,11 +1,18 @@
 /**
- * Language metadata for supported locales.
+ * Language metadata for the locales actually shipped in the UI.
  *
- * To add a new language:
- * 1. Create a new folder: src/i18n/locales/{code}/translation.json
- * 2. Add an entry here with the language code, English name, and native name
- * 3. Optionally add a priority (lower = higher in dropdown, no priority = alphabetical at end)
- * 4. For RTL languages, add direction: 'rtl'
+ * Other locales (zh, zh-TW, es, de, ja, ko, vi, pl, it, ru, uk, pt, cs,
+ * tr, ar) have partial translation files under `src/i18n/locales/` that
+ * are kept for future reactivation but are 17% incomplete vs en/fr —
+ * shipping them would mean half-French strings bleeding through the
+ * marquee Voice Commands feature. We expose only the locales we can
+ * stand behind today.
+ *
+ * To reactivate a locale:
+ * 1. Fully sync `src/i18n/locales/{code}/translation.json` with en
+ *    (use bun scripts/check-translations.ts to find gaps).
+ * 2. Add the brace entry for `{code}` to the glob in `index.ts`.
+ * 3. Add the metadata entry below.
  */
 export const LANGUAGE_METADATA: Record<
   string,
@@ -18,19 +25,4 @@ export const LANGUAGE_METADATA: Record<
 > = {
   fr: { name: "French", nativeName: "Français", priority: 1 },
   en: { name: "English", nativeName: "English", priority: 2 },
-  zh: { name: "Simplified Chinese", nativeName: "简体中文", priority: 3 },
-  "zh-TW": { name: "Traditional Chinese", nativeName: "繁體中文", priority: 4 },
-  es: { name: "Spanish", nativeName: "Español", priority: 5 },
-  de: { name: "German", nativeName: "Deutsch", priority: 6 },
-  ja: { name: "Japanese", nativeName: "日本語", priority: 7 },
-  ko: { name: "Korean", nativeName: "한국어", priority: 8 },
-  vi: { name: "Vietnamese", nativeName: "Tiếng Việt", priority: 9 },
-  pl: { name: "Polish", nativeName: "Polski", priority: 10 },
-  it: { name: "Italian", nativeName: "Italiano", priority: 11 },
-  ru: { name: "Russian", nativeName: "Русский", priority: 12 },
-  uk: { name: "Ukrainian", nativeName: "Українська", priority: 13 },
-  pt: { name: "Portuguese", nativeName: "Português", priority: 14 },
-  cs: { name: "Czech", nativeName: "Čeština", priority: 15 },
-  tr: { name: "Turkish", nativeName: "Türkçe", priority: 16 },
-  ar: { name: "Arabic", nativeName: "العربية", priority: 17, direction: "rtl" },
 };

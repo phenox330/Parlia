@@ -40,7 +40,7 @@
   },
   "bundle": {
     "active": true,
-    "createUpdaterArtifacts": false,
+    "createUpdaterArtifacts": true,
     "targets": "all",
     "resources": ["resources/**/*"],
     "license": "MIT",
@@ -76,8 +76,10 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "",
-      "endpoints": []
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERFMDA5ODMyNUMyMTA2Q0EKUldUS0JpRmNNcGdBM3A5TENVeTFYS1dwOFVDajlCcGVGVDlLR2lYUEJtNVVYSzZ6UGkrYjRmdzUK",
+      "endpoints": [
+        "https://www.parlia.fr/api/v1/updater/latest.json"
+      ]
     }
   }
 }

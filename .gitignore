@@ -37,3 +37,8 @@ blob-report/
 
 .direnv
 .envrc
+
+# Tauri updater signing keys — these MUST live outside git. The pubkey
+# in tauri.conf.json is fine; the .key (private) file is not.
+*.key
+.tauri/

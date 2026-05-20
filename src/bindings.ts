@@ -865,7 +865,16 @@ description_key: string; filename: string; url: string | null; size_mb: number; 
  */
 sha256: string | null }
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
-export type ModelInfo = { id: string; name: string; description: string; filename: string; url: string | null; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; is_directory: boolean; engine_type: EngineType; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; is_custom: boolean }
+export type ModelInfo = { id: string; name: string; description: string; filename: string; url: string | null; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; is_directory: boolean; engine_type: EngineType; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; is_custom: boolean; 
+/**
+ * Pinned SHA-256 of the downloaded artifact (the `.bin` blob for
+ * Whisper-style models, the `.tar.gz` archive for directory models).
+ * `None` falls back to allowlist + size cap + symlink reject + tar
+ * path validation only — still way better than the pre-v0.7.14
+ * posture, but a CDN compromise would still pass. Fill in for every
+ * catalog entry once the values have been verified out-of-band.
+ */
+sha256?: string | null }
 export type ModelLoadStatus = { is_loaded: boolean; current_model: string | null }
 export type ModelUnloadTimeout = "never" | "immediately" | "min_2" | "min_5" | "min_10" | "min_15" | "hour_1" | "sec_5"
 export type OverlayPosition = "none" | "top" | "bottom"
